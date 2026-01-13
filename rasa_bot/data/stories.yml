@@ -1,7 +1,95 @@
 version: "3.1"
 
 stories:
-  - story: greet path
+  # =========================
+  # FAQ search via Form (no manual context)
+  # =========================
+
+  - story: FAQ Search Flow (form) - ask then search and clear slot
     steps:
-      - intent: greet
-      - action: utter_greet
+      - intent: search_faq
+      - action: faq_search_form
+      - active_loop: faq_search_form
+
+      # user provides keyword (normally intent=inform_faq_query with entity search_term)
+      - intent: inform_faq_query
+      - action: faq_search_form
+      - active_loop: null
+
+      - action: action_search_faq
+      # NOTE: action_search_faq MUST return SlotSet("search_term", None)
+      - slot_was_set:
+          - search_term: null
+
+      - action: utter_show_quick_replies
+
+  - story: FAQ Search Flow - user provides keyword directly (no explicit search_faq)
+    steps:
+      - intent: inform_faq_query
+      - action: faq_search_form
+      - active_loop: faq_search_form
+      - action: faq_search_form
+      - active_loop: null
+
+      - action: action_search_faq
+      - slot_was_set:
+          - search_term: null
+      - action: utter_show_quick_replies
+
+  # =========================
+  # History search via Form (no manual context)
+  # =========================
+
+  - story: History Search Flow (form) - ask then search and clear slot
+    steps:
+      - intent: request_chat_history
+      - action: history_search_form
+      - active_loop: history_search_form
+
+      - intent: inform_history_query
+      - action: history_search_form
+      - active_loop: null
+
+      - action: action_search_chat_history
+      # NOTE: action_search_chat_history MUST return SlotSet("search_term", None)
+      - slot_was_set:
+          - search_term: null
+
+      - action: utter_show_quick_replies
+
+  - story: History Search Flow - user provides keyword directly
+    steps:
+      - intent: inform_history_query
+      - action: history_search_form
+      - active_loop: history_search_form
+      - action: history_search_form
+      - active_loop: null
+
+      - action: action_search_chat_history
+      - slot_was_set:
+          - search_term: null
+      - action: utter_show_quick_replies
+
+  # =========================
+  # Follow-up patterns (continuous conversation)
+  # =========================
+
+  - story: After FAQ search -> user immediately asks to search history
+    steps:
+      - action: action_search_faq
+      - slot_was_set:
+          - search_term: null
+      - action: utter_show_quick_replies
+      - intent: request_chat_history
+      - action: history_search_form
+      - active_loop: history_search_form
+
+  - story: After history search -> user immediately asks to search FAQ
+    steps:
+      - action: action_search_chat_history
+      - slot_was_set:
+          - search_term: null
+      - action: utter_show_quick_replies
+      - intent: search_faq
+      - action: faq_search_form
+      - active_loop: faq_search_form

@@ -1,53 +1,89 @@
 version: "3.1"
 
 rules:
-  - rule: respond to greeting
+  # =========================
+  # Global / deterministic rules
+  # Keep rules minimal to avoid "if-else bot"
+  # =========================
+
+  - rule: Greeting
     steps:
       - intent: greet
       - action: utter_greet
+      - action: utter_show_quick_replies
 
-  - rule: respond to abusive
-    steps:
-      - intent: abusive
-      - action: utter_abusive
-
-  - rule: respond to goodbye
+  - rule: Goodbye
     steps:
       - intent: goodbye
       - action: utter_goodbye
 
-  # Use product_info intent
-  - rule: respond to product info questions
+  - rule: Bot challenge
     steps:
-      - intent: product_info
-      - action: utter_product_info
+      - intent: bot_challenge
+      - action: utter_bot_identity
+      - action: utter_show_quick_replies
 
-  # Use returns intent
-  - rule: respond to returns / exchange questions
+  - rule: Handle abusive language
     steps:
-      - intent: returns
-      - action: utter_returns
+      - intent: abusive
+      - action: utter_abusive_warning
+      - action: utter_show_quick_replies
 
-  # Use utter_default as fallback for low-confidence intents
-  - rule: nlu fallback
+  - rule: Start a new chat (restart)
+    # NOTE: action_restart resets tracker state; keep it as a rule for reliability.
     steps:
-      - intent: nlu_fallback
-      - action: utter_default
-        
-  # Activate order 
+      - intent: start_new_chat
+      - action: utter_restart_ack
+      - action: action_restart
+
+  # =========================
+  # Order status form (hard business logic)
+  # =========================
+
   - rule: Activate order status form
     steps:
-      - intent: order_status
+      - intent: check_order_status
       - action: order_status_form
-      - active_loop: order_status_form  # Wait until fill the form
-        
-  # Submit form
+      - active_loop: order_status_form
+
   - rule: Submit order status form
-    condition: 
-      - active_loop: order_status_form  # Only suit for working form
+    condition:
+      - active_loop: order_status_form
     steps:
       - action: order_status_form
-      - active_loop: null            # Form finished
+      - active_loop: null
       - slot_was_set:
-          - requested_slot: null     
-      - action: action_check_order_status # Execute backend query logic
+          - requested_slot: null
+      - action: action_check_order_status
+      - action: utter_show_quick_replies
+
+  # Allow correcting order_id while the form is active (do NOT deactivate the loop)
+  - rule: Allow order id correction during form
+    condition:
+      - active_loop: order_status_form
+    steps:
+      - intent: update_order_details
+      # The form action will re-run and extract the latest order_id entity into the slot.
+      - action: order_status_form
+      - active_loop: order_status_form
+
+  # Also allow providing order_id (explicitly) during the form
+  - rule: Allow order id info during form
+    condition:
+      - active_loop: order_status_form
+    steps:
+      - intent: inform_order_id
+      - action: order_status_form
+      - active_loop: order_status_form
+
+  # =========================
+  # Human handover (hard business logic)
+  # =========================
+
+  - rule: Escalate to human agent
+    steps:
+      - intent: human_handover
+      - action: utter_handover_ack
+      - action: action_create_support_request
+      - action: action_handover
+      - action: utter_show_quick_replies
