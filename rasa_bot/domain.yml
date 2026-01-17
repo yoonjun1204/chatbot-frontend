@@ -2,73 +2,156 @@ version: "3.1"
 
 intents:
   - greet
-  - product_info
-  - order_status
-  - returns
   - goodbye
+  - bot_challenge
   - abusive
+  - start_new_chat
+  - product_info
+  - returns
+
+  # Order
+  - check_order_status
+  - inform_order_id
+  - update_order_details
+
+  # Search flows
+  - search_faq
+  - request_chat_history
+  - search_chat_history
+  - inform_faq_query
+  - inform_history_query
+
+  # Handover / ticket
+  - human_handover
+  - submit_support_request
+
+  # UX helpers
+  - rephrase
+  - delete_chat_messages
+  - edit_last_message
   - nlu_fallback
 
 entities:
-  - order_number
+  - order_id
+  - search_term
 
 slots:
-  order_number:
+  # --- Core business ---
+  order_id:
     type: text
-    influence_conversation: true
+    influence_conversation: false
     mappings:
-      # 1. Priority: If an entity with the string "ORD-xxx" is explicitly found, use it.
       - type: from_entity
-        entity: order_number
+        entity: order_id
 
-      # 2. Secondly: If the form is asking a question and the user replies with plain text, then it will be treated as an ID.
-      - type: from_text
-        conditions:
-         - active_loop: order_status_form
-         - requested_slot: order_number
-        # Key change: Exclude the triggering intent itself.
-        # In other words: if this statement is used to trigger order_status, don't treat it as a parameter!
-        not_intent: order_status
+  # Used by FAQ/History forms (no zombie context; active_loop is the context)
+  search_term:
+    type: text
+    influence_conversation: false
+    mappings:
+      - type: from_entity
+        entity: search_term
+
+  requested_slot:
+    type: text
+    influence_conversation: false
+    mappings:
+      - type: custom
 
 forms:
   order_status_form:
     required_slots:
-      - order_number # The sole purpose of this form is to fill this slot
-        
-actions:
-  - action_check_order_status
+      - order_id
+
+  faq_search_form:
+    required_slots:
+      - search_term
+
+  history_search_form:
+    required_slots:
+      - search_term
 
 responses:
+  # --- Basic ---
   utter_greet:
-    - text: "Hi! I'm your shirt assistant. I can help with product info, order status, and returns."
+    - text: "Hi there! I'm your virtual assistant. How can I help you today?"
 
   utter_goodbye:
-    - text: "Thanks for chatting! If you need anything else, just open the chat again."
+    - text: "Goodbye! Have a great day."
 
-  utter_abusive:
-    - text: "I'm here to help. Let's keep the conversation respectful."
+  utter_bot_identity:
+    - text: "I am an automated virtual assistant designed to help with orders and FAQs."
 
-  # 🔹 Used as fallback response
-  utter_default:
-    - text: "I'm not sure I understood that. I can help with product info, order status, and returns."
+  utter_abusive_warning:
+    - text: "I'm trying to help. Let's please keep the conversation respectful."
 
-  # 🔹 Used when user asks for order status
-  utter_ask_order_number:
-    - text: "Sure, please provide your order number (e.g., ORD12345)."
+  utter_restart_ack:
+    - text: "Okay, starting a new session now..."
 
-  # 🔹 New: response for product info
+  utter_show_quick_replies:
+    - text: "Here are some things you can do:"
+      buttons:
+        - title: "Check Order Status"
+          payload: "/check_order_status"
+        - title: "Search FAQ"
+          payload: "/search_faq"
+        - title: "Search Chat History"
+          payload: "/search_chat_history"
+        - title: "Talk to Human"
+          payload: "/human_handover"
+
+  # --- Business ---
   utter_product_info:
-    - text: >
-        Our shirts are unisex and available in sizes S–XL. 
-        We have cotton and cotton-blend options in several colors like black, white, and blue.
+    - text: "We sell a wide range of electronics and accessories. Check our website for the full catalogue!"
 
-  # 🔹 New: response for returns / exchanges
-  utter_returns:
-    - text: >
-        You can return or exchange shirts within 30 days as long as they are unworn and with tags.
-        To start a return, please contact support with your order number.
-    - text: "Could you please provide your order number? (e.g., ORD--12345)"
+  utter_returns_policy:
+    - text: "You can return items within 30 days of receipt if they are in original condition."
+
+  # --- Form prompts ---
+  utter_ask_order_id:
+    - text: "Could you please provide your Order ID? (e.g., ORD-12345)"
+
+  utter_ask_search_term:
+    - text: "What keyword should I search for?"
+
+  # Optional: keep separate wording but map to the same requested slot
+  utter_ask_faq_search_form_search_term:
+    - text: "Sure—what topic would you like to search in our FAQ?"
+
+  utter_ask_history_search_form_search_term:
+    - text: "I can search your chat history. What keyword should I look for?"
+
+  # --- Handover / ticket ---
+  utter_handover_ack:
+    - text: "I see you need human assistance. Let me connect you."
+
+  utter_ticket_ack:
+    - text: "I'll open a ticket for that."
+
+  utter_ticket_created:
+    - text: "Ticket created successfully!"
+
+  # --- UX helpers ---
+  utter_rephrase_prompt:
+    - text: "I'm sorry, I didn't quite catch that. Could you rephrase?"
+
+  utter_delete_chat_messages_help:
+    - text: "To clear your chat history, please use the 'Clear Chat' button in the menu bar."
+
+  utter_edit_last_message_help:
+    - text: "You can edit your last message by hovering over it and clicking the pencil icon."
+
+  utter_fallback:
+    - text: "I'm sorry, I didn't understand that. You can ask about your order, products, returns, or search."
+
+actions:
+  - action_check_order_status
+  - action_create_support_request
+  - action_handover
+  - action_search_faq
+  - action_search_chat_history
+  - action_restart
 
 session_config:
   session_expiration_time: 60
-  carry_over_slots_to_new_session: true
+  carry_over_slots_to_new_session: false
