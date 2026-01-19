@@ -39,7 +39,7 @@ slots:
   # --- Core business ---
   order_id:
     type: text
-    influence_conversation: false
+    influence_conversation: false # The value of the slot will not enter the TED state embedding
     mappings:
       - type: from_entity
         entity: order_id
