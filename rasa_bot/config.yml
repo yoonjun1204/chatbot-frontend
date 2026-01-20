@@ -5,14 +5,17 @@ assistant_id: 2026-jan-13-rasa_v1.0
 language: en
 
 pipeline:
+  # Divide string into token
   - name: WhitespaceTokenizer
   
+  # Regular Expression Part
   - name: RegexFeaturizer
   - name: RegexEntityExtractor
     case_sensitive: false
     use_regexes: true
     use_word_boundaries: true
-
+  
+  # Lexical and grammatical features
   - name: LexicalSyntacticFeaturizer
   - name: CountVectorsFeaturizer
     analyzer: word
