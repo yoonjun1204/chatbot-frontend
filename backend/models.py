@@ -1,6 +1,7 @@
 from datetime import datetime, date
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Date
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import JSON
 
 from database import Base
 
@@ -44,6 +45,12 @@ class User(Base):
     # NEW: role for access control
     # Possible values: "customer", "admin", "agent"
     role = Column(String, default="customer", nullable=False)
+    
+    # NEW fields for admin panel
+    access = Column(JSON, default={})  # permissions
+    status = Column(String, default="active")  # active | suspended
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
 
     orders = relationship("Order", back_populates="user")
 

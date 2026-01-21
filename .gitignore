@@ -8,7 +8,8 @@ env/
 .idea/
 .vscode/
 *.swp
-models/*.tar.gz
+rasa_bot/models/
+rasa_bot/.rasa/
 *.db
 *.db-journal
 results/

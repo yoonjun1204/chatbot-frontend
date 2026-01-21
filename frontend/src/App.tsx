@@ -1,9 +1,8 @@
-import "./App.css";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
-import LoginPage from "./pages/LoginPage";
-import CustomerHome from "./pages/CustomerHome";
-import AdminDashboard from "./pages/AdminDashboard";
-import AgentDashboard from "./pages/AgentDashboard";
+import LoginPage from "./pages/Login/LoginPage";
+import CustomerHome from "./pages/Customer/CustomerHome";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import AgentDashboard from "./pages/HumanAgent/AgentDashboard";
 
 const AppInner: React.FC = () => {
   const { user } = useAuth();
