@@ -1,19 +1,39 @@
+# Python
 __pycache__/
 *.py[cod]
 *.class
+
+# Virtual environments
 venv/
 .venv/
 env/
+
+# OS / Editor
 .DS_Store
 .idea/
 .vscode/
 *.swp
-models/*.tar.gz
+
+# Rasa
+.rasa/
+rasa_bot/models/
+
+# Databases
 *.db
 *.db-journal
+
+# Outputs
 results/
 reports/
+
+# Logs
+*.log
+logs/
+
+# Environment variables
 .env
+
+# Frontend
 frontend/node_modules/
 frontend/dist/
 frontend/build/
