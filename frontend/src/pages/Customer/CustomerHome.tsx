@@ -1,3 +1,4 @@
+// frontend/src/pages/Customer/CustomerHome.tsx
 import "./CustomerHome.css";
 import ChatWidget from "../../components/Customer/ChatWidget";
 import { useAuth } from "../../auth/AuthContext";
@@ -127,7 +128,7 @@ const CustomerHome: React.FC = () => {
       </footer>
 
       {/* Chat widget, now gets user email if logged in */}
-      <ChatWidget userIdentifier={user?.email ?? null} />
+      <ChatWidget userIdentifier={user?.email ?? "anonymous"} />
     </div>
   );
 };

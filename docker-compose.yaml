@@ -7,6 +7,8 @@ services:
       POSTGRES_DB: chatbot_db
       POSTGRES_USER: chatbot_user
       POSTGRES_PASSWORD: chatbot_password
+      TZ: Asia/Singapore
+      PGTZ: Asia/Singapore
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
@@ -17,9 +19,9 @@ services:
     container_name: chatbot_rasa
     restart: unless-stopped
     working_dir: /app
-    user: root        #  Change to the root
+    user: root #  Change to the root
     volumes:
-      - ./rasa_bot:/app          # your bot project (domain.yml, nlu.yml, etc.)
+      - ./rasa_bot:/app # your bot project (domain.yml, nlu.yml, etc.)
       #- rasa_models:/app/models  # named volume for trained models
     command: >
       run --enable-api --cors "*" --port 5005
@@ -27,13 +29,13 @@ services:
       - "5005:5005"
 
   action_server:
-#    image: rasa/rasa-sdk:3.6.2
+    #    image: rasa/rasa-sdk:3.6.2
     build:
-      context: ./rasa_bot/actions  
+      context: ./rasa_bot/actions
     container_name: chatbot_action_server
     restart: unless-stopped
     working_dir: /app
-#    user: root  # Same as rasa
+    #    user: root  # Same as rasa
     volumes:
       # Path
       - ./rasa_bot/actions:/app/actions
@@ -55,7 +57,7 @@ services:
       - db
       - rasa
     volumes: # 👈 Add this section
-      - ./backend:/app  # Mount the local backend folder to the /app folder inside the container 
+      - ./backend:/app # Mount the local backend folder to the /app folder inside the container
     environment:
       DATABASE_URL: postgresql+psycopg2://chatbot_user:chatbot_password@db:5432/chatbot_db
       RASA_URL: http://rasa:5005/model/parse
@@ -81,4 +83,4 @@ services:
 
 volumes:
   db_data:
-  rasa_models:   # 👈 new named volume for Rasa models
+  rasa_models: # 👈 new named volume for Rasa models

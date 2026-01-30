@@ -1,11 +1,12 @@
+# backend/main.py
 import os
 from fastapi import FastAPI, Depends, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from database import Base, engine, get_db, SessionLocal
-from models import Conversation, Message, User, Order
+from models import Message, User
 from sqlalchemy.orm import Session
 from schemas import LoginRequest, LoginResponse
-from routers import agent, customer
+from routers import customer
 from routers.admin import admin_master_router
 
 
