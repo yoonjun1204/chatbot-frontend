@@ -5,14 +5,14 @@ FROM rasa/rasa:3.6.20-full
 WORKDIR /app
 USER root
 
-# Copy the entire rasa_bot directory
+# 1. Copy everything FROM rasa_bot folder INTO /app in the container
 COPY . .
 
-# Ensure permissions for the models folder
-RUN chmod -R 777 /app/models
+# 2. NOW change permissions (The folder exists now)
+# If this still fails, it means your 'models' folder is empty or missing in GitHub
+RUN mkdir -p /app/models && chmod -R 777 /app/models
 
 USER 1001
 
-# Start Rasa with API enabled
-# We use port 5005, which Railway will map to its public URL
+# Enable API and CORS for your frontend
 CMD ["run", "-m", "models", "--enable-api", "--cors", "*", "--port", "5005"]
