@@ -4,8 +4,8 @@ from database import get_db
 from dependencies import require_admin
 from schemas import CreateAgentRequest, UpdateUserRequest
 from typing import Optional
-from models import Conversation, Message, User, Order
-from fastapi import FastAPI, Depends, HTTPException, Header
+from models import User
+from fastapi import Depends, HTTPException
 from sqlalchemy.orm.attributes import flag_modified
 
 router = APIRouter()

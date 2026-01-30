@@ -3,14 +3,14 @@ import axios from "axios";
 import { useAuth } from "../../auth/AuthContext";
 import { type User, ACCESS_KEYS, type AccessKey } from "./types";
 import {
-  Search, UserPlus, LogOut, Edit2, Trash2,
+  Search, UserPlus, Edit2, Trash2,
   Shield, Mail, User as UserIcon, CheckCircle, XCircle
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
-const AdminDashboard: React.FC = () => {
-  const { user: currentUser, logout } = useAuth();
+const UserManagement: React.FC = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -193,13 +193,6 @@ const AdminDashboard: React.FC = () => {
           >
             <UserPlus size={18} />
             Add Agent
-          </button>
-          <button
-            onClick={logout}
-            className="flex items-center gap-2 bg-white border border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600 px-5 py-2.5 rounded-lg font-semibold transition-all"
-          >
-            <LogOut size={18} />
-            Logout
           </button>
         </div>
       </header>
@@ -394,4 +387,4 @@ const AdminDashboard: React.FC = () => {
   );
 };
 
-export default AdminDashboard;
+export default UserManagement;

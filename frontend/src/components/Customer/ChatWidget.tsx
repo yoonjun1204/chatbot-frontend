@@ -1,3 +1,4 @@
+// --- frontend/src/components/Customer/ChatWidget.tsx ---
 import React, { useState, useEffect, useRef } from "react";
 import type { FormEvent } from "react";
 import { type Sender, type ChatMessage, type ChatApiResponse, type ChatWidgetProps } from "./types";
@@ -36,13 +37,13 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ userIdentifier }) => {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/chat`, {
+      const res = await fetch(`${API_BASE}/api/customer/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text,
           conversation_id: conversationId,
-          user_id: userIdentifier ?? null, // 👈 pass logged-in user email/id
+          user_id: userIdentifier || "anonymous", // 👈 pass logged-in user email/id
         }),
       });
 
