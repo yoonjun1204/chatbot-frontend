@@ -41,4 +41,5 @@
 #  password: password
 #  queue: queue
 action_endpoint:
-  url: "http://action_server:5055/webhook"
+  # Use the internal name Railway gives your Action Server service
+  url: "http://action-server.railway.internal:5055/webhook"

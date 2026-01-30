@@ -1,0 +1,18 @@
+# rasa_bot/Dockerfile2
+# rasa_server
+FROM rasa/rasa:3.6.20-full
+
+WORKDIR /app
+USER root
+
+# Copy the entire rasa_bot directory
+COPY . .
+
+# Ensure permissions for the models folder
+RUN chmod -R 777 /app/models
+
+USER 1001
+
+# Start Rasa with API enabled
+# We use port 5005, which Railway will map to its public URL
+CMD ["run", "-m", "models", "--enable-api", "--cors", "*", "--port", "5005"]
