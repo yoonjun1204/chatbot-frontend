@@ -29,11 +29,13 @@ services:
       - "5005:5005"
 
   action_server:
-    image: rasa/rasa-sdk:3.6.2
+    #    image: rasa/rasa-sdk:3.6.2
+    build:
+      context: ./rasa_bot/actions
     container_name: chatbot_action_server
     restart: unless-stopped
     working_dir: /app
-    user: root # Same as rasa
+    #    user: root  # Same as rasa
     volumes:
       # Path
       - ./rasa_bot/actions:/app/actions
@@ -43,6 +45,7 @@ services:
       - start
       - --actions
       - actions
+      - --debug
 
   backend:
     build:

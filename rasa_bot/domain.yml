@@ -151,7 +151,7 @@ actions:
   - action_search_faq
   - action_search_chat_history
   - action_restart
-
+  - validate_order_status_form  
 session_config:
   session_expiration_time: 60
   carry_over_slots_to_new_session: false
