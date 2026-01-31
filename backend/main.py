@@ -25,12 +25,15 @@ FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
 # CORS so React frontend can call this API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_ORIGIN],
+    # Ensure this is a LIST of specific strings, not a wildcard "*"
+    allow_origins=[
+        FRONTEND_ORIGIN,
+        "https://chatbot-frontend-ten-pink.vercel.app", # Add your specific Vercel URL here
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 @app.get("/api/conversations/{conversation_id}/messages")
 def get_conversation_messages(conversation_id: int, db: Session = Depends(get_db)):
