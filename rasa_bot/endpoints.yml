@@ -41,4 +41,4 @@
 #  password: password
 #  queue: queue
 action_endpoint:
-  url: "http://loyal-eagerness.railway.internal:5055/webhook"
+  url: "http://rasa_actions.railway.internal:5055/webhook"
