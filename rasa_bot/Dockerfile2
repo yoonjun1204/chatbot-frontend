@@ -9,6 +9,9 @@ USER root
 # 1. Copy everything FROM rasa_bot/ INTO /app
 COPY . . 
 
+# DEBUG: This will list your files in the logs so we can see the truth
+RUN ls -la
+
 # 2. NOW you can change permissions because the folder exists
 RUN chmod -R 777 /app/models
 
