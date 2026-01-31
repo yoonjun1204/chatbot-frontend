@@ -5,14 +5,16 @@ FROM rasa/rasa-sdk:3.6.2
 USER root
 WORKDIR /app
 
-# Copy requirements from rasa_bot/requirements.txt
-COPY requirements.txt .
+# Copy everything from the root directory (rasa_bot)
+COPY . .
+
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the actions folder from rasa_bot/actions/
-COPY ./actions /app/actions
-
+# Ensure we are on the right user for Rasa
 USER 1001
 
-# Listen on 5055 (Rasa default)
+# Start the action server
+# Rasa SDK automatically looks for a folder named "actions" or "action" 
+# inside the current directory if you tell it where to look.
 CMD ["start", "--actions", "actions", "--port", "5055"]
