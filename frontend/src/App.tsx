@@ -1,3 +1,4 @@
+// frontend/src/App.tsx
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import LoginPage from "./pages/Login/LoginPage";
 import CustomerHome from "./pages/Customer/CustomerHome";
