@@ -23,6 +23,9 @@ if "postgresql" in raw_url and "sslmode" not in raw_url:
     else:
         raw_url += f"{separator}sslmode=disable"
 
+if "neon.tech" in raw_url:
+    USE_SSL = True  # Neon always needs it
+
 # 4. Create the Engine
 if raw_url.startswith("sqlite"):
     # SQLite-specific settings
