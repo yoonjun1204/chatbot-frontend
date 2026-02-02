@@ -16,7 +16,6 @@ env/
 
 # Rasa
 .rasa/
-rasa_bot/models/
 
 # Databases
 *.db
