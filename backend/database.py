@@ -15,9 +15,13 @@ if raw_url.startswith("postgres://"):
 
 # 3. Handle SSL for Neon (Required for Cloud Databases)
 # If we are using Postgres, we append sslmode=require if not already there
+USE_SSL = os.getenv("DB_USE_SSL", "false").lower() == "true"
 if "postgresql" in raw_url and "sslmode" not in raw_url:
     separator = "&" if "?" in raw_url else "?"
-    raw_url += f"{separator}sslmode=require"
+    if USE_SSL:
+        raw_url += f"{separator}sslmode=require"
+    else:
+        raw_url += f"{separator}sslmode=disable"
 
 # 4. Create the Engine
 if raw_url.startswith("sqlite"):
@@ -27,6 +31,9 @@ else:
     # Postgres settings (Neon)
     # pool_pre_ping=True helps prevent "SSL connection closed" errors
     engine = create_engine(raw_url, pool_pre_ping=True)
+
+USE_SSL = os.getenv("DB_USE_SSL", "false").lower() == "true"
+
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
