@@ -40,5 +40,8 @@
 #  username: username
 #  password: password
 #  queue: queue
+# action_endpoint:
+#   url: "http://action_server:5055/webhook"
+
 action_endpoint:
-  url: "http://rasa_actions.railway.internal:5055/webhook"
+  url: "https://action-server-784693230618.asia-southeast1.run.app/webhook"
