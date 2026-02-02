@@ -22,6 +22,5 @@ COPY . .
 # Expose FastAPI port
 EXPOSE 8000
 
-# Run seed script, then start the app
-# Use /bin/bash -c to chain commands together
-CMD ["/bin/bash", "-c", "python seed.py && uvicorn main:app --host 0.0.0.0 --port $PORT"]
+# Command to run the FastAPI app with Uvicorn
+CMD ["/bin/bash", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]
