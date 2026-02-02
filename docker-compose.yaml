@@ -76,3 +76,15 @@ services:
     container_name: chatbot_frontend
     ports:
       - "5173:80"
+
+  rasa:
+    image: rasa/rasa:3.6.20-full
+    container_name: chatbot_rasa
+    user: root
+    volumes:
+      # If your files are in rasa_bot, use: ./rasa_bot:/app
+      - ./rasa_bot:/app
+      - ./rasa_bot/models:/app/models
+    ports:
+      - "5005:5005"
+    command: run --enable-api --cors "*" --debug
