@@ -30,8 +30,5 @@ USER root
 RUN chmod -R 777 /app
 USER 1001
 
-# Train the model so it's ready inside the image
-RUN rasa train
-
 # Cloud Run uses the PORT variable, so we listen on 8080
 ENTRYPOINT ["rasa", "run", "--enable-api", "--cors", "*", "--port", "8080"]
