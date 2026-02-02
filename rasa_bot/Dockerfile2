@@ -1,21 +1,37 @@
 # rasa_bot/Dockerfile2
 # rasa_server
 
+#FROM rasa/rasa:3.6.20-full
+
+# WORKDIR /app
+# USER root
+
+# # 1. Copy everything FROM rasa_bot/ INTO /app
+# COPY . . 
+
+# # DEBUG: This will list your files in the logs so we can see the truth
+# RUN ls -la
+
+# # 2. NOW you can change permissions because the folder exists
+# RUN chmod -R 777 /app/models
+
+# USER 1001
+
+# CMD ["run", "-m", "models", "--enable-api", "--cors", "*", "--port", "5005"]
+
+
 FROM rasa/rasa:3.6.20-full
 
 WORKDIR /app
+COPY . .
+
 USER root
-
-# 1. Copy everything FROM rasa_bot/ INTO /app
-COPY . . 
-
-# DEBUG: This will list your files in the logs so we can see the truth
-RUN ls -la
-
-# 2. NOW you can change permissions because the folder exists
-RUN chmod -R 777 /app/models
-
+# Give permissions for the model folder
+RUN chmod -R 777 /app
 USER 1001
 
-CMD ["run", "-m", "models", "--enable-api", "--cors", "*", "--port", "5005"]
+# Train the model so it's ready inside the image
+RUN rasa train
 
+# Cloud Run uses the PORT variable, so we listen on 8080
+ENTRYPOINT ["rasa", "run", "--enable-api", "--cors", "*", "--port", "8080"]
