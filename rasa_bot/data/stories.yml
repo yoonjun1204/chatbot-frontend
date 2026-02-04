@@ -1,95 +1,133 @@
 version: "3.1"
 
 stories:
-  # =========================
-  # FAQ search via Form (no manual context)
-  # =========================
+  # ========================================================
+  # Happy Path: Check Order Status
+  # Demonstrates a successful flow from start to finish.
+  # ========================================================
+  - story: Happy path - Check order status successfully
+    steps:
+      - intent: greet
+      - action: utter_greet
+      - action: utter_show_quick_replies
+      
+      # User initiates the form
+      - intent: check_order_status
+      - action: order_status_form
+      - active_loop: order_status_form
+      
+      # User provides the ID.
+      # Note: The Rule handles the submission logic (closing loop, running check action).
+      # In stories, we simply show the successful flow continuing.
+      - intent: inform_order_id
+        entities:
+          - order_id: "ORD-12345"
+      
+      # The form closes (handled by rule), and the bot shows the result
+      - action: order_status_form
+      - active_loop: null
+      - slot_was_set:
+          - requested_slot: null
+      
+      # The outcome action defined in your Rule
+      - action: action_check_order_status
+      - action: utter_show_quick_replies
+      
+      # Conversation ends gracefully
+      - intent: goodbye
+      - action: utter_goodbye
 
-  - story: FAQ Search Flow (form) - ask then search and clear slot
+  # ========================================================
+  # Happy Path: FAQ Search
+  # Demonstrates searching for information.
+  # ========================================================
+  - story: Happy path - Search FAQ
     steps:
       - intent: search_faq
       - action: faq_search_form
       - active_loop: faq_search_form
-
-      # user provides keyword (normally intent=inform_faq_query with entity search_term)
+      
+      # User provides keyword
       - intent: inform_faq_query
+        entities:
+          - search_term: "return policy"
+          
+      # Form submission flow
       - action: faq_search_form
       - active_loop: null
-
+      - slot_was_set:
+          - requested_slot: null
+      
       - action: action_search_faq
-      # NOTE: action_search_faq MUST return SlotSet("search_term", None)
-      - slot_was_set:
-          - search_term: null
-
       - action: utter_show_quick_replies
 
-  - story: FAQ Search Flow - user provides keyword directly (no explicit search_faq)
+  # ========================================================
+  # Context Switching: Order -> FAQ
+  # Real-world scenario: User checks order, then asks a question.
+  # ========================================================
+  - story: Context Switch - Check order then search FAQ
     steps:
-      - intent: inform_faq_query
-      - action: faq_search_form
-      - active_loop: faq_search_form
-      - action: faq_search_form
+      # --- Part 1: Order Status ---
+      - intent: check_order_status
+      - action: order_status_form
+      - active_loop: order_status_form
+      - action: order_status_form
       - active_loop: null
-
-      - action: action_search_faq
-      - slot_was_set:
-          - search_term: null
+      - action: action_check_order_status
       - action: utter_show_quick_replies
-
-  # =========================
-  # History search via Form (no manual context)
-  # =========================
-
-  - story: History Search Flow (form) - ask then search and clear slot
-    steps:
-      - intent: request_chat_history
-      - action: history_search_form
-      - active_loop: history_search_form
-
-      - intent: inform_history_query
-      - action: history_search_form
-      - active_loop: null
-
-      - action: action_search_chat_history
-      # NOTE: action_search_chat_history MUST return SlotSet("search_term", None)
-      - slot_was_set:
-          - search_term: null
-
-      - action: utter_show_quick_replies
-
-  - story: History Search Flow - user provides keyword directly
-    steps:
-      - intent: inform_history_query
-      - action: history_search_form
-      - active_loop: history_search_form
-      - action: history_search_form
-      - active_loop: null
-
-      - action: action_search_chat_history
-      - slot_was_set:
-          - search_term: null
-      - action: utter_show_quick_replies
-
-  # =========================
-  # Follow-up patterns (continuous conversation)
-  # =========================
-
-  - story: After FAQ search -> user immediately asks to search history
-    steps:
-      - action: action_search_faq
-      - slot_was_set:
-          - search_term: null
-      - action: utter_show_quick_replies
-      - intent: request_chat_history
-      - action: history_search_form
-      - active_loop: history_search_form
-
-  - story: After history search -> user immediately asks to search FAQ
-    steps:
-      - action: action_search_chat_history
-      - slot_was_set:
-          - search_term: null
-      - action: utter_show_quick_replies
+      
+      # --- Part 2: Switch to FAQ ---
+      # User is not done yet, they immediately start another task
       - intent: search_faq
       - action: faq_search_form
       - active_loop: faq_search_form
+      - action: faq_search_form
+      - active_loop: null
+      - action: action_search_faq
+      - action: utter_show_quick_replies
+
+  # ========================================================
+  # Context Switching: FAQ -> History -> Human
+  # A longer chain of different tasks.
+  # ========================================================
+  - story: Multi-task flow - FAQ to History to Human
+    steps:
+      # 1. Search FAQ
+      - intent: search_faq
+      - action: faq_search_form
+      - active_loop: null
+      - action: action_search_faq
+      - action: utter_show_quick_replies
+      
+      # 2. Search History
+      - intent: request_chat_history
+      - action: history_search_form
+      - active_loop: null
+      - action: action_search_chat_history
+      - action: utter_show_quick_replies
+      
+      # 3. Give up and ask for human
+      - intent: human_handover
+      - action: utter_handover_ack
+      - action: action_create_support_request
+      - action: action_handover
+      - action: utter_show_quick_replies
+
+  # ========================================================
+  # Interactive Flow: Direct intent with entities
+  # User says "Search FAQ for refund" in one go.
+  # ========================================================
+  - story: Direct interaction - FAQ with entity provided upfront
+    steps:
+      - intent: inform_faq_query
+        entities:
+          - search_term: "refund"
+      
+      # Because the Rule "Activate FAQ Search Form (Direct Inquiry)" exists,
+      # The form starts, validates the slot immediately, and closes.
+      - action: faq_search_form
+      - active_loop: faq_search_form
+      - action: faq_search_form
+      - active_loop: null
+      - action: action_search_faq
+      - action: utter_show_quick_replies

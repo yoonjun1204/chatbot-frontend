@@ -57,6 +57,64 @@ rules:
       - action: action_check_order_status
       - action: utter_show_quick_replies
 
+  # =========================
+  # FAQ search form (hard logic)
+  # =========================
+  - rule: Activate FAQ search form
+    steps:
+      - intent: search_faq
+      - action: faq_search_form
+      - active_loop: faq_search_form
+
+  - rule: Submit FAQ search form
+    condition:
+      - active_loop: faq_search_form
+    steps:
+      - action: faq_search_form
+      - active_loop: null
+      - slot_was_set:
+          - requested_slot: null
+      - action: action_search_faq
+      - action: utter_show_quick_replies
+
+  # allow user providing keyword intent while form is active
+  - rule: Allow FAQ keyword during form
+    condition:
+      - active_loop: faq_search_form
+    steps:
+      - intent: inform_faq_query
+      - action: faq_search_form
+      - active_loop: faq_search_form
+
+
+  # =========================
+  # History search form (hard logic)
+  # =========================
+  - rule: Activate history search form
+    steps:
+      - intent: search_chat_history
+      - action: history_search_form
+      - active_loop: history_search_form
+
+  - rule: Submit history search form
+    condition:
+      - active_loop: history_search_form
+    steps:
+      - action: history_search_form
+      - active_loop: null
+      - slot_was_set:
+          - requested_slot: null
+      - action: action_search_chat_history
+      - action: utter_show_quick_replies
+
+  - rule: Allow history keyword during form
+    condition:
+      - active_loop: history_search_form
+    steps:
+      - intent: inform_history_query
+      - action: history_search_form
+      - active_loop: history_search_form
+
   # Allow correcting order_id while the form is active (do NOT deactivate the loop)
   - rule: Allow order id correction during form
     condition:
@@ -76,6 +134,18 @@ rules:
       - action: order_status_form
       - active_loop: order_status_form
 
+  - rule: Respond to product info
+    steps:
+      - intent: product_info
+      - action: utter_product_info
+      - action: utter_show_quick_replies
+
+  - rule: Respond to returns policy
+    steps:
+      - intent: returns
+      - action: utter_returns_policy
+      - action: utter_show_quick_replies
+        
   # =========================
   # Human handover (hard business logic)
   # =========================
