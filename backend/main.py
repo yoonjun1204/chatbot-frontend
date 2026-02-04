@@ -8,7 +8,10 @@ from sqlalchemy.orm import Session
 from schemas import LoginRequest, LoginResponse
 from routers import customer
 from routers.admin import admin_master_router
-
+import requests
+import os
+from pydantic import BaseModel
+from typing import Optional, List, Dict, Any
 
 # docker exec -it chatbot_db psql -U chatbot_user -d chatbot_db
 # Create tables
@@ -67,3 +70,34 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         name=user.name,
         role=user.role or "customer",
     )
+
+
+class ChatRequest(BaseModel):
+    message: str
+    conversation_id: Optional[int] = None
+    sender: Optional[str] = "user"
+
+
+@app.post("/api/chat")
+def proxy_chat_to_rasa(req: ChatRequest):
+    rasa_url = os.getenv("RASA_WEBHOOK_URL", "http://rasa:5005/webhooks/rest/webhook")
+
+    payload = {
+        "sender": str(req.conversation_id) if req.conversation_id else "user",
+        "message": req.message
+    }
+
+    print(f"[DEBUG] Forwarding to Rasa at: {rasa_url} with payload: {payload}")
+
+    try:
+        
+        response = requests.post(rasa_url, json=payload, timeout=10)
+        response.raise_for_status()
+
+        
+        return response.json()
+
+    except requests.exceptions.RequestException as e:
+        print(f"[ERROR] Failed to connect to Rasa: {e}")
+        # Debug
+        raise HTTPException(status_code=500, detail=f"Failed to connect to Rasa: {str(e)}")

@@ -12,32 +12,41 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432" # optional: expose for pgAdmin / local tools
+      - "5432:5432"
 
   rasa:
-    image: rasa/rasa:3.6.20-full
+    # --- CHANGE START: Use Dockerfile2 instead of raw image ---
+    build:
+      context: ./rasa_bot
+      dockerfile: Dockerfile2
+    # --- CHANGE END ---
     container_name: chatbot_rasa
     restart: unless-stopped
     working_dir: /app
-    user: root #  Change to the root
+    user: root 
     volumes:
-      - ./rasa_bot:/app # your bot project (domain.yml, nlu.yml, etc.)
-      #- rasa_models:/app/models  # named volume for trained models
+      # Map local directory to container to sync files (including models)
+      - ./rasa_bot:/app 
+    # --- CHANGE START: Explicitly point to the models directory ---
     command: >
-      run --enable-api --cors "*" --port 5005
+      run 
+      -m models 
+      --enable-api 
+      --cors "*" 
+      --port 5005 
+      --debug
+    # --- CHANGE END ---
     ports:
       - "5005:5005"
 
   action_server:
-    #    image: rasa/rasa-sdk:3.6.2
     build:
-      context: ./rasa_bot/actions
+      context: ./rasa_bot
+      dockerfile: Dockerfile
     container_name: chatbot_action_server
     restart: unless-stopped
     working_dir: /app
-    #    user: root  # Same as rasa
     volumes:
-      # Path
       - ./rasa_bot/actions:/app/actions
     ports:
       - "5055:5055"
@@ -56,12 +65,11 @@ services:
     depends_on:
       - db
       - rasa
-    volumes: # 👈 Add this section
-      - ./backend:/app # Mount the local backend folder to the /app folder inside the container
+    volumes:
+      - ./backend:/app
     environment:
       DATABASE_URL: postgresql+psycopg2://chatbot_user:chatbot_password@db:5432/chatbot_db
       RASA_URL: http://rasa:5005/model/parse
-      # Note: This needs to be changed to the new Webhook URL, ensuring the environment variables are correct.
       RASA_WEBHOOK_URL: http://rasa:5005/webhooks/rest/webhook
       FRONTEND_ORIGIN: http://localhost:5173
     ports:
@@ -83,4 +91,4 @@ services:
 
 volumes:
   db_data:
-  rasa_models: # 👈 new named volume for Rasa models
+  # rasa_models: # Not needed if we mount ./rasa_bot:/app

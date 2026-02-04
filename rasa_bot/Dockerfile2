@@ -2,17 +2,20 @@
 # rasa_server
 FROM rasa/rasa:3.6.20-full
 
-WORKDIR /app
+# Switch to root to install dependencies or change permissions
 USER root
 
-# Copy the entire rasa_bot directory
+WORKDIR /app
+
+# Copy the entire rasa_bot directory into the container
 COPY . .
 
-# Ensure permissions for the models folder
-RUN chmod -R 777 /app/models
+# Ensure the models directory exists and has correct permissions
+RUN mkdir -p /app/models && chmod -R 777 /app
 
+# Switch back to non-root user for security (optional, but recommended by Rasa)
+# However, if you encounter permission issues during development, you can keep running as root via docker-compose
 USER 1001
 
-# Start Rasa with API enabled
-# We use port 5005, which Railway will map to its public URL
-CMD ["run", "-m", "models", "--enable-api", "--cors", "*", "--port", "5005"]
+# Start Rasa with API enabled and point to the models directory
+CMD ["run", "-m", "models", "--enable-api", "--cors", "*", "--port", "5005", "--debug"]
