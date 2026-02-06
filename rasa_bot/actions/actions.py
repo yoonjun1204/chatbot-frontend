@@ -83,20 +83,49 @@ class DatabaseService:
 db_service = DatabaseService()
 
 
-# =========================================================
-# Validation Layer: Order Status Form Validation (Security)
-# =========================================================
-class ValidateOrderStatusForm(FormValidationAction):
-    """
-    Multi-layer validation for order_id slot.
-    Implements defense-in-depth:
-    1. Regex format validation
-    2. Entity ambiguity detection
-    3. Database existence check
-    """
+ORD_PAT = re.compile(r"\bORD[-\s]?\d{3,}\b", re.IGNORECASE)
+DIGITS_PAT = re.compile(r"\b\d{5,}\b")
 
+def _normalize_order_id(raw: str) -> Optional[str]:
+    if not raw:
+        return None
+    s = raw.strip().upper()
+
+    # common cleanup
+    s = s.replace("_", "-").replace(" ", "")
+    # Accept ORD10002 -> ORD-10002
+    m = re.match(r"^(ORD)(\d{3,})$", s)
+    if m:
+        return f"ORD-{m.group(2)}"
+
+    # Accept ORD-10002 already
+    m = re.match(r"^(ORD)-(\d{3,})$", s)
+    if m:
+        return s
+
+    # Accept digits only -> interpret as ORD-xxxxx (only if length >= 5)
+    if re.match(r"^\d{5,}$", s):
+        return f"ORD-{s}"
+
+    return None
+
+def _extract_order_id_from_text(text: str) -> Optional[str]:
+    if not text:
+        return None
+    # Prefer explicit ORD patterns
+    m = ORD_PAT.search(text)
+    if m:
+        return _normalize_order_id(m.group(0))
+    # Fallback: 5+ digits
+    m = DIGITS_PAT.search(text)
+    if m:
+        return _normalize_order_id(m.group(0))
+    return None
+
+
+class ValidateOrderStatusForm(FormValidationAction):
     def name(self) -> Text:
-        return "validate_order_status_form" # domain.yml looking for
+        return "validate_order_status_form"
 
     def validate_order_id(
         self,
@@ -106,48 +135,49 @@ class ValidateOrderStatusForm(FormValidationAction):
         domain: DomainDict,
     ) -> Dict[Text, Any]:
 
-        if slot_value is None:
-            return {"order_id": None}
+        # 1) Collect candidates from (a) slot_value (b) extracted entities (c) raw text
+        candidates: List[str] = []
 
-        # Normalize input
-        order_id = str(slot_value).strip().upper()
+        if slot_value is not None:
+            if isinstance(slot_value, list):
+                candidates += [str(x) for x in slot_value if x is not None]
+            else:
+                candidates.append(str(slot_value))
 
-        # ---------------------------
-        # Defense Line 1: Regex check
-        # ---------------------------
-        pattern = r"^ORD-\d{5}$"
-        if not re.match(pattern, order_id):
+        for e in tracker.latest_message.get("entities", []):
+            if e.get("entity") == "order_id" and e.get("value"):
+                candidates.append(str(e["value"]))
+
+        text = tracker.latest_message.get("text", "")
+        extracted = _extract_order_id_from_text(text)
+        if extracted:
+            candidates.append(extracted)
+
+        # dedupe + normalize
+        normalized = []
+        seen = set()
+        for c in candidates:
+            n = _normalize_order_id(c) or _extract_order_id_from_text(c)
+            if n and n not in seen:
+                normalized.append(n)
+                seen.add(n)
+
+        # 2) Handle no candidate
+        if not normalized:
             dispatcher.utter_message(
-                text="The order ID format is invalid. Please use the format ORD-12345."
+                text="I couldn't find an Order ID. Please type something like ORD-12345 (or just the 5+ digits)."
             )
             return {"order_id": None}
 
-        # --------------------------------
-        # Defense Line 2: Ambiguity check
-        # --------------------------------
-        entities = [
-            e
-            for e in tracker.latest_message.get("entities", [])
-            if e.get("entity") == "order_id"
-        ]
-
-        if len(entities) > 1:
-            ids_found = [e.get("value") for e in entities]
+        # 3) Handle multiple: ask user to confirm ONE instead of dead-looping
+        if len(normalized) > 1:
             dispatcher.utter_message(
-                text=f"I detected multiple order IDs ({', '.join(ids_found)}). Please specify one."
+                text=f"I found multiple possible Order IDs: {', '.join(normalized)}. Please tell me which one to use."
             )
             return {"order_id": None}
 
-        # ------------------------------------
-        # Defense Line 3: Existence check (DB)
-        # ------------------------------------
-        if db_service.get_order_status(order_id) is None:
-            dispatcher.utter_message(
-                text=f"No order found with ID {order_id}. Please double-check."
-            )
-            return {"order_id": None}
-
-        return {"order_id": order_id}
+        # 4) Accept the single normalized value (NO DB existence check here)
+        return {"order_id": normalized[0]}
 
 
 # =========================================================

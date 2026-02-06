@@ -36,21 +36,34 @@ entities:
   - search_term
 
 slots:
-  # --- Core business ---
   order_id:
     type: text
-    influence_conversation: false # The value of the slot will not enter the TED state embedding
+    influence_conversation: false
     mappings:
       - type: from_entity
         entity: order_id
+      # fallback: 
+      # when NLU fails to extract the entity, but the form is requesting the order_id 
+      # directly consume the text.
+      - type: from_text
+        conditions:
+          - active_loop: order_status_form
+            requested_slot: order_id
 
-  # Used by FAQ/History forms (no zombie context; active_loop is the context)
   search_term:
     type: text
     influence_conversation: false
     mappings:
       - type: from_entity
         entity: search_term
+      - type: from_text
+        conditions:
+          - active_loop: faq_search_form
+            requested_slot: search_term
+      - type: from_text
+        conditions:
+          - active_loop: history_search_form
+            requested_slot: search_term
 
   requested_slot:
     type: text
@@ -142,6 +155,9 @@ responses:
     - text: "You can edit your last message by hovering over it and clicking the pencil icon."
 
   utter_fallback:
+    - text: "I'm sorry, I didn't understand that. You can ask about your order, products, returns, or search."
+  
+  utter_default_feedback:
     - text: "I'm sorry, I didn't understand that. You can ask about your order, products, returns, or search."
 
 actions:
