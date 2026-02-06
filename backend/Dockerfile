@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first (for better Docker layer caching)
+# Copy requirements first
 COPY requirements.txt .
 
 # Install Python dependencies
@@ -19,10 +19,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the backend code
 COPY . .
 
-# (Optional) If you use python-dotenv in main.py, it will pick up .env
-
 # Expose FastAPI port
 EXPOSE 8000
 
-# Run the app
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Command to run the FastAPI app with Uvicorn
+CMD ["/bin/bash", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]

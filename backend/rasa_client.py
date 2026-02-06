@@ -7,11 +7,9 @@ from sqlalchemy.orm import Session
 from models import ChatLog, User
 import traceback
 
-RASA_URL = os.getenv("RASA_URL", "http://rasa:5005/model/parse")
+RASA_URL = os.getenv("RASA_URL")
 # 🆕 New URL for full conversation flow (Core + Action Server)
-RASA_WEBHOOK_URL = os.getenv(
-    "RASA_WEBHOOK_URL", "http://rasa:5005/webhooks/rest/webhook"
-)
+RASA_WEBHOOK_URL = os.getenv("RASA_WEBHOOK_URL")
 
 # Define Singapore Time offset
 SGT = timezone(timedelta(hours=8))
@@ -56,11 +54,11 @@ def get_rasa_response(message: str, sender_id: str, actor_email: str, db: Sessio
     # 2. Get NLU data (Intent & Confidence/Accuracy)
     intent_name, _, confidence = parse_message(message)
 
-    payload = {"sender": sender_id, "message": message}
+    payload = {"sender": str(sender_id), "message": message}
 
     try:
         # 3. Call Rasa Webhook for the actual bot response
-        r = requests.post(RASA_WEBHOOK_URL, json=payload, timeout=10)
+        r = requests.post(RASA_WEBHOOK_URL, json=payload, timeout=30)
         r.raise_for_status()
         rasa_output = r.json()
 
@@ -125,6 +123,7 @@ def save_chat_log(
     conf: float,
     duration: float,
     escalated: bool,
+    user_message_id=None,
 ):
     """
     Unified helper to save performance metrics to the ChatLog table.
@@ -139,6 +138,7 @@ def save_chat_log(
         response_time_ms=duration,
         is_escalated=escalated,
         timestamp=datetime.now(SGT),
+        user_message_id=user_message_id,
     )
     db.add(new_log)
     db.commit()

@@ -27,11 +27,16 @@ class Conversation(Base):
     __tablename__ = "conversations"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, index=True, nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    title = Column(String, default="New Chat")
     created_at = Column(DateTime(timezone=True), server_default=text("NOW()"))
-    updated_at = Column(DateTime(timezone=True), server_default=text("NOW()"))
+    updated_at = Column(
+        DateTime(timezone=True), server_default=text("now()"), onupdate=text("now()")
+    )
 
-    messages = relationship("Message", back_populates="conversation")
+    messages = relationship(
+        "Message", back_populates="conversation", cascade="all, delete-orphan"
+    )
 
 
 class Message(Base):
@@ -68,7 +73,9 @@ class User(Base):
     access = Column(JSON, default={})  # permissions
     status = Column(String, default="active")  # active | suspended
     created_at = Column(DateTime(timezone=True), server_default=text("NOW()"))
-    updated_at = Column(DateTime(timezone=True), server_default=text("NOW()"))
+    updated_at = Column(
+        DateTime(timezone=True), server_default=text("now()"), onupdate=text("now()")
+    )
 
     orders = relationship("Order", back_populates="user")
 
@@ -94,7 +101,9 @@ class ChatLog(Base):
     __tablename__ = "chat_logs"
 
     id = Column(Integer, primary_key=True, index=True)
-    timestamp = Column(DateTime(timezone=True), server_default=text("NOW()"))
+    timestamp = Column(
+        DateTime(timezone=True), server_default=text("now()"), onupdate=text("now()")
+    )
     actor_id = Column(String, index=True)  # User ID or Session ID
     actor_email = Column(String, index=True, nullable=True)
     user_message = Column(Text)
@@ -103,3 +112,4 @@ class ChatLog(Base):
     confidence = Column(Float)  # Accuracy check
     response_time_ms = Column(Float)
     is_escalated = Column(Boolean, default=False)  # True if handed to human agent
+    user_message_id = Column(Integer, nullable=True)  # Link to the Message.id

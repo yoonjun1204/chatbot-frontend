@@ -18,6 +18,8 @@ class ChatResponse(BaseModel):
     entities: Optional[Dict[str, Any]] = {}
     quick_replies: Optional[List[str]] = []
     payload: Optional[Dict[str, Any]] = {}
+    user_message_id: Optional[int] = None
+    bot_message_id: Optional[int] = None
 
 
 # --- main.py ---
