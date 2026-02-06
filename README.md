@@ -19,6 +19,51 @@ This project is containerized and ready for cloud deployment.
 # Access Point
 - https://chatbot-frontend-ten-pink.vercel.app/
 
+# Project Structure
+```
+chatbot-for-customer-support/
+│
+├── backend/
+|    ├──routers
+|        ├──admin  #folder for admin API
+|        ├──customer  #folder for customer API
+|        ├──agent  #folder for agent API
+|    ├──database.py
+|    ├──dependecies.py
+|    ├──main.py
+|    ├──models.py
+|    ├──nlp.py
+|    ├──rasa_client.py
+|    ├──requirements.txt
+|    ├──schemas.py
+|    ├──seed.py           
+|
+├── frontend/
+|    ├──auth
+|    ├──components
+|    |    ├──admin
+|    |    ├──customer
+|    |    ├──agent
+|    ├──pages
+|    |    ├──admin
+|    |    ├──customer
+|    |    ├──agent
+|    |    ├──login          
+|
+├── rasa_bot/
+|    ├──actions
+|    |    ├──actions.py
+|    ├──data
+|    |    ├──nlu.yml
+|    |    ├──rules.yml
+|    |    ├──stories.yml 
+|    ├──config.yml
+|    ├──credentials.yml
+|    ├──domain.yml
+|    ├──endpoints.yml
+|    ├──requirements.txt           
+```
+
 # 🚀 Features
 🤖 Chatbot Intelligence
 - Rasa NLU for intent recognition & entity extraction
