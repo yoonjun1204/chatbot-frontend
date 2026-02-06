@@ -335,3 +335,26 @@ class ActionRestart(Action):
 
         dispatcher.utter_message(response="utter_restart_ack")
         return [Restarted()]
+
+# =========================================================
+# Core Fallback Action (RulePolicy)
+# =========================================================
+class ActionDefaultFallback(Action):
+    """Default fallback action used by Core (RulePolicy).
+
+    This action must exist because `config.yml` sets:
+        RulePolicy.core_fallback_action_name: "action_default_fallback"
+
+    It responds with the standard fallback utterance and then shows quick replies
+    to help users recover.
+    """
+
+    def name(self) -> Text:
+        return "action_default_fallback"
+
+    def run(
+        self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: DomainDict
+    ) -> List[Dict[Text, Any]]:
+        dispatcher.utter_message(response="utter_fallback")
+        dispatcher.utter_message(response="utter_show_quick_replies")
+        return []

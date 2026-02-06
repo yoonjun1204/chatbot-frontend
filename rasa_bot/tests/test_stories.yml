@@ -1,91 +1,203 @@
-#### This file contains tests to evaluate that your bot behaves as expected.
-#### If you want to learn more, please see the docs: https://rasa.com/docs/rasa/testing-your-assistant
+version: "3.1"
 
 stories:
-- story: happy path 1
-  steps:
-  - user: |
-      hello there!
-    intent: greet
-  - action: utter_greet
-  - user: |
-      amazing
-    intent: mood_great
-  - action: utter_happy
+  # ========================================================
+  # Test 1: Happy Path (Standard Format)
+  # Tests if the bot accepts a standard "ORD-XXXXX" format
+  # and retrieves data from your Mock DatabaseService.
+  # ========================================================
+  - story: test_happy_path_existing_order
+    steps:
+      - user: |
+          Hello
+        intent: greet
+      - action: utter_greet
+      - action: utter_show_quick_replies
+      
+      # User asks to check status
+      - user: |
+          Check my order status
+        intent: check_order_status
+      - action: order_status_form
+      - active_loop: order_status_form
+      # The form will ask for the required slot. In tests we assert this via requested_slot.
+      - action: order_status_form
+      - slot_was_set:
+          - requested_slot: order_id
+      
+      # User provides a valid ID present in your Mock DB (ORD-10001)
+      - user: |
+          It is ORD-10001
+        intent: inform_order_id
+        entities:
+          - order_id: "ORD-10001"
+      
+      # Form validation should succeed
+      - action: order_status_form
+      - active_loop: null
+      - slot_was_set:
+          - requested_slot: null
+      # Check if the slot captured the correct ID
+      - slot_was_set:
+          - order_id: "ORD-10001"
+      
+      # Action triggers DB lookup
+      - action: action_check_order_status
+      # Your action resets the slot to None after checking
+      - slot_was_set:
+          - order_id: null
+      - action: utter_show_quick_replies
 
-- story: happy path 2
-  steps:
-  - user: |
-      hello there!
-    intent: greet
-  - action: utter_greet
-  - user: |
-      amazing
-    intent: mood_great
-  - action: utter_happy
-  - user: |
-      bye-bye!
-    intent: goodbye
-  - action: utter_goodbye
 
-- story: sad path 1
-  steps:
-  - user: |
-      hello
-    intent: greet
-  - action: utter_greet
-  - user: |
-      not good
-    intent: mood_unhappy
-  - action: utter_cheer_up
-  - action: utter_did_that_help
-  - user: |
-      yes
-    intent: affirm
-  - action: utter_happy
+  # ========================================================
+  # Test 2: Regex & Normalization Logic
+  # Crucial Test! This verifies your `_extract_order_id_from_text` 
+  # and `_normalize_order_id` functions in actions.py.
+  # User inputs "10002" -> Bot must convert it to "ORD-10002".
+  # ========================================================
+  - story: test_digit_normalization_logic
+    steps:
+      - user: |
+          Track an order
+        intent: check_order_status
+      - action: order_status_form
+      - active_loop: order_status_form
+      # The form asks for the required slot.
+      - action: order_status_form
+      - slot_was_set:
+          - requested_slot: order_id
+      
+      # User inputs ONLY digits. 
+      # Even if NLU misses this entity, your ValidateAction regex should catch it.
+      - user: |
+          10002
+        intent: inform_order_id
+      
+      # The form runs validation
+      - action: order_status_form
+      - active_loop: null
+      
+      # VERIFICATION: The slot MUST be normalized to "ORD-10002"
+      - slot_was_set:
+          - order_id: "ORD-10002"
+      
+      - action: action_check_order_status
+      - action: utter_show_quick_replies
 
-- story: sad path 2
-  steps:
-  - user: |
-      hello
-    intent: greet
-  - action: utter_greet
-  - user: |
-      not good
-    intent: mood_unhappy
-  - action: utter_cheer_up
-  - action: utter_did_that_help
-  - user: |
-      not really
-    intent: deny
-  - action: utter_goodbye
 
-- story: sad path 3
-  steps:
-  - user: |
-      hi
-    intent: greet
-  - action: utter_greet
-  - user: |
-      very terrible
-    intent: mood_unhappy
-  - action: utter_cheer_up
-  - action: utter_did_that_help
-  - user: |
-      no
-    intent: deny
-  - action: utter_goodbye
+  # ========================================================
+  # Test 3: Fuzzy Search for FAQ
+  # Tests if `rapidfuzz` in `ActionSearchFaq` is working.
+  # We use a keyword "track" which matches "How do I track my order?"
+  # ========================================================
+  - story: test_faq_fuzzy_search
+    steps:
+      - user: |
+          search the FAQ
+        intent: search_faq
+      - action: faq_search_form
+      - active_loop: faq_search_form
+      # The form asks for the required slot.
+      - action: faq_search_form
+      - slot_was_set:
+          - requested_slot: search_term
+      
+      # User provides a keyword
+      - user: |
+          keyword return
+        intent: inform_faq_query
+        entities:
+          - search_term: "return"
+          
+      - action: faq_search_form
+      - active_loop: null
+      
+      # Action executes search
+      - action: action_search_faq
+      # Action should reset the search term slot
+      - slot_was_set:
+          - search_term: null
+      - action: utter_show_quick_replies
 
-- story: say goodbye
-  steps:
-  - user: |
-      bye-bye!
-    intent: goodbye
-  - action: utter_goodbye
 
-- story: bot challenge
-  steps:
-  - user: |
-      are you a bot?
-    intent: bot_challenge
-  - action: utter_iamabot
+  # ========================================================
+  # Test 4: Chat History Search (Mock DB)
+  # Tests `ActionSearchChatHistory` against your `self.chat_history` data.
+  # We search for "return", which exists in your mock data.
+  # ========================================================
+  - story: test_chat_history_retrieval
+    steps:
+      - user: |
+          search my chat history
+        intent: search_chat_history
+      - action: history_search_form
+      - active_loop: history_search_form
+      # The form asks for the required slot.
+      - action: history_search_form
+      - slot_was_set:
+          - requested_slot: search_term
+      
+      # Keyword present in your mock DB
+      - user: |
+          search my chat history for refund
+        intent: inform_history_query
+        entities:
+          - search_term: "refund"
+          
+      - action: history_search_form
+      - active_loop: null
+      
+      - action: action_search_chat_history
+      - slot_was_set:
+          - search_term: null
+      - action: utter_show_quick_replies
+
+
+  # ========================================================
+  # Test 5: Ambiguity Handling (Validation Fail)
+  # Tests the logic where `candidates > 1` in `ValidateOrderStatusForm`.
+  # The bot should NOT close the form, but ask for clarification.
+  # ========================================================
+  - story: test_ambiguous_order_ids
+    steps:
+      - user: |
+          check status
+        intent: check_order_status
+      - action: order_status_form
+      - active_loop: order_status_form
+      # The form asks for the required slot.
+      - action: order_status_form
+      - slot_was_set:
+          - requested_slot: order_id
+      
+      # User inputs confusing text with two potential IDs
+      - user: |
+          is it ORD-10001 or ORD-10002?
+        intent: inform_order_id
+        # NLU might pick up both, or Regex picks up both
+      
+      # Validation runs, finds 2 candidates, returns order_id: None
+      # The form loop should remain ACTIVE (bot asks to clarify)
+      - action: order_status_form
+      - active_loop: order_status_form
+      - slot_was_set:
+          - order_id: null
+      # After ambiguity, the form should still be active and keep requesting the same slot.
+      - action: order_status_form
+      - slot_was_set:
+          - requested_slot: order_id
+      
+      # User clarifies with a single ID
+      - user: |
+          ORD-10001
+        intent: inform_order_id
+        entities:
+          - order_id: "ORD-10001"
+          
+      # Now it succeeds
+      - action: order_status_form
+      - active_loop: null
+      - slot_was_set:
+          - order_id: "ORD-10001"
+      - action: action_check_order_status
+      - action: utter_show_quick_replies

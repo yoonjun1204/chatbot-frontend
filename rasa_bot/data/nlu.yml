@@ -198,7 +198,8 @@ nlu:
       - please record my support request
 
   # ---------- chat history ----------
-  - intent: request_chat_history
+  - intent: search_chat_history
+    # Merged examples from the deprecated `request_chat_history` intent to keep a single source of truth.
     examples: |
       - show my chat history
       - I want to see previous conversations
@@ -210,9 +211,6 @@ nlu:
       - I need to review old messages
       - where can I find my chat history
       - show prior conversation
-
-  - intent: search_chat_history
-    examples: |
       - search my chat history
       - find past messages
       - look for earlier replies

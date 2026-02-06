@@ -100,7 +100,7 @@ stories:
       - action: utter_show_quick_replies
       
       # 2. Search History
-      - intent: request_chat_history
+      - intent: search_chat_history
       - action: history_search_form
       - active_loop: null
       - action: action_search_chat_history

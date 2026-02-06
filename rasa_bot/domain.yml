@@ -16,7 +16,6 @@ intents:
 
   # Search flows
   - search_faq
-  - request_chat_history
   - search_chat_history
   - inform_faq_query
   - inform_history_query
@@ -167,7 +166,8 @@ actions:
   - action_search_faq
   - action_search_chat_history
   - action_restart
-  - validate_order_status_form  
+  - validate_order_status_form
+  - action_default_fallback
 session_config:
   session_expiration_time: 60
   carry_over_slots_to_new_session: false
