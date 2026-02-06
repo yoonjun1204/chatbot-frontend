@@ -3,11 +3,21 @@ A full-stack customer support chatbot system built with:
 
 - 🧠 Rasa 3.x (intent classification + entity extraction)
 - ⚙️ FastAPI backend (conversation logic + database + hybrid NLP)
-- 🌐 React + Vite frontend (chat UI)
+- 🌐 React + Vite frontend + Tailwind CSS (chat UI)
 - 🗄️ PostgreSQL for storing users, messages & conversations
-- 🐳 Docker & Docker Compose for one-command deployment
+- 🐳 Docker & Docker Compose 
 
 This project is designed for academic purposes (FYP/CSIT321) but follows real-world architecture and production-grade practices.
+
+# 🌐 Hosting & Deployment
+This project is containerized and ready for cloud deployment.
+- Hosting Platform: [frontend: Vercel], [backend: Render], [Database: Neon Tech], [rasa server and action server: Google Cloud Run]
+- Orchestration: Docker Compose
+- Web Server: Nginx (serving the React build and reverse-proxying API requests)
+- Database: Managed PostgreSQL
+
+# Access Point
+- https://chatbot-frontend-ten-pink.vercel.app/
 
 # 🚀 Features
 🤖 Chatbot Intelligence
@@ -32,145 +42,16 @@ This project is designed for academic purposes (FYP/CSIT321) but follows real-wo
 - Conversation state handling
 - Backend + Rasa integration
 
-#🗄️ Database (PostgreSQL)
-- Users
-- Orders
-- Conversations
-- Messages
-
-# 🐳 Running the Project (One Command)
-Make sure Docker Desktop is running.
-
-# 🐳 Docker Architecture
-- Full environment starts with:
-```
-cd chatbot-for-customer-support
-docker compose build
-docker compose up -d
-```
-This will:
-- Build backend image
-- Build frontend image
-- Start PostgreSQL
-- Start Rasa server
-- Serve frontend via Nginx
-
-Includes:
-- backend	FastAPI (Python 3.10)
-- frontend	React (Node 20 + Nginx)
-- db	PostgreSQL 16
-- rasa	Rasa 3.6
-
-# Seeding Data(only once unless you changed the database schema or you run docker compose down -v) 
-```
-docker exec -it chatbot_backend python seed.py
-```
-
-# Train the rasa model(only once unless you changed nlu.yml, stories.yml, rules.yml, domain.yml, config.yml or you run docker compose down -v)
-```
-docker exec -it chatbot_rasa rasa train
-or
-docker exec -it chatbot_rasa rasa train --force
-```
-
-```
-📁 Project Structure
-chatbot-for-customer-support/
-│
-├── backend/
-│   ├── main.py
-│   ├── database.py
-│   ├── models.py
-│   ├── nlp.py
-│   ├── rasa_client.py
-│   ├── requirements.txt
-│   └── Dockerfile
-│
-├── frontend/
-│   ├── src/
-│   ├── package.json
-│   ├── Dockerfile
-│   └── vite.config.js
-│
-├── rasa_bot/
-│   ├── domain.yml
-│   ├── nlu.yml
-│   ├── rules.yml
-│   ├── stories.yml
-│   └── models/
-│
-├── docker-compose.yml
-└── README.md
-```
-
-# 🐳 Running the Project (One Command)
-Make sure Docker Desktop is running.
-
-Then start all the services:
-```
-docker compose up -d
-```
-Access the services:
-- Frontend	http://localhost:5173
-- FastAPI Docs http://localhost:8000/docs
-- Rasa Server http://localhost:5005
-
-# For Development:
-```
-# After changing backend code (Python)
-docker compose build backend
-
-# After changing Rasa bot config (nlu.yml, domain.yml, etc.)
-docker exec -it chatbot_rasa rasa train
-
-# if "docker exec -it chatbot_rasa rasa train" not working
-# Rebuild Rasa model forcing it to retrain (not from cache)
-docker exec -it chatbot_rasa rasa train --force
-
-# Optional: restart Rasa after training
-docker compose restart rasa
-
-# After changing frontend (React/CSS)
-docker compose build frontend
-
-# After changing DB schema (models.py) and wanting fresh DB
-docker compose down -v
-docker compose build
-# In a second terminal, reseed the database
-docker exec -it chatbot_backend python seed.py
-```
-# Use the full rebuild only when:
-- You changed both backend and frontend a lot
-- Or you changed something in docker-compose.yml or Dockerfiles
-- Or you’re not sure what’s stale
-```
-docker compose build
-
-# If something looks wrong:
-docker compose build --no-cache
-```
-
-# Stop the services:
-```
-docker compose down or CTRL+C
-```
-
-# Dont use "docker compose down -v" unless:
-- You want a fresh empty database
-- You want to delete ALL trained Rasa models
-- You want to wipe all volumes completely
-- You're resetting the whole project for a clean rebuild
-
-# Database Schema (Simplified)
-- Users
-- Conversations
-- Messages
-- Orders
-
+# 📚 Database Schema
+- Users: Manages customer identities.
+- Conversations: Tracks unique chat sessions.
+- Messages: Stores the full dialogue history with edit tracking.
+- Orders: Simulated retail data for intent fulfillment.
+- Chat Logs: Performance metrics (Intent accuracy, Response time).
 
 # 🛠️ Technologies Used
 - FastAPI
-- React + Vite
+- React + Vite + Tailwind CSS
 - Rasa 3.6
 - PostgreSQL
 - SQLAlchemy
