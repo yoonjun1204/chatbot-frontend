@@ -15,7 +15,8 @@ env/
 *.swp
 
 # Rasa
-.rasa/
+rasa_bot/.rasa/
+rasa_bot/.cache/
 
 # Databases
 *.db

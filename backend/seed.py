@@ -7,34 +7,34 @@ from models import User, Order
 # FIXED USER DATA (with roles)
 # ---------------------------
 FIXED_USERS = [
-    {"name": "Admin User",     "email": "admin@example.com",  "role": "admin"},
-    {"name": "Support Agent",  "email": "agent@example.com",  "role": "agent"},
-    {"name": "Alice Tan",      "email": "alicetan@example.com", "role": "customer"},
-    {"name": "Bob Lim",        "email": "boblim@example.com",   "role": "customer"},
-    {"name": "Charlie Lee",    "email": "charlielee@example.com", "role": "customer"},
-    {"name": "Daniel Ng",      "email": "danielng@example.com", "role": "customer"},
-    {"name": "Emily Wong",     "email": "emilywong@example.com", "role": "customer"},
-    {"name": "Fiona Chong",    "email": "fionachong@example.com", "role": "customer"},
-    {"name": "Grace Koh",      "email": "gracekoh@example.com", "role": "customer"},
-    {"name": "Hannah Goh",     "email": "hannahgoh@example.com", "role": "customer"},
-    {"name": "Ivan Chan",      "email": "ivanchan@example.com", "role": "customer"},
-    {"name": "Jacob Teo",      "email": "jacobteo@example.com", "role": "customer"},
+    {"name": "Admin User", "email": "admin@example.com", "role": "admin"},
+    {"name": "Support Agent", "email": "agent@example.com", "role": "agent"},
+    {"name": "Alice Tan", "email": "alicetan@example.com", "role": "customer"},
+    {"name": "Bob Lim", "email": "boblim@example.com", "role": "customer"},
+    {"name": "Charlie Lee", "email": "charlielee@example.com", "role": "customer"},
+    {"name": "Daniel Ng", "email": "danielng@example.com", "role": "customer"},
+    {"name": "Emily Wong", "email": "emilywong@example.com", "role": "customer"},
+    {"name": "Fiona Chong", "email": "fionachong@example.com", "role": "customer"},
+    {"name": "Grace Koh", "email": "gracekoh@example.com", "role": "customer"},
+    {"name": "Hannah Goh", "email": "hannahgoh@example.com", "role": "customer"},
+    {"name": "Ivan Chan", "email": "ivanchan@example.com", "role": "customer"},
+    {"name": "Jacob Teo", "email": "jacobteo@example.com", "role": "customer"},
 ]
 
 # ---------------------------
 # FIXED ORDER DATA
 # ---------------------------
 FIXED_ORDERS = [
-    {"order_number": "ORD-1001", "status": "Processing",        "days_delta": 5},
-    {"order_number": "ORD-1002", "status": "Shipped",           "days_delta": 3},
-    {"order_number": "ORD-1003", "status": "Delivered",         "days_delta": -7},
-    {"order_number": "ORD-1004", "status": "Out for delivery",  "days_delta": 1},
-    {"order_number": "ORD-1005", "status": "Processing",        "days_delta": 10},
-    {"order_number": "ORD-1006", "status": "Shipped",           "days_delta": 4},
-    {"order_number": "ORD-1007", "status": "Delivered",         "days_delta": -2},
-    {"order_number": "ORD-1008", "status": "Processing",        "days_delta": 8},
-    {"order_number": "ORD-1009", "status": "Shipped",           "days_delta": 2},
-    {"order_number": "ORD-1010", "status": "Delivered",         "days_delta": -14},
+    {"order_number": "ORD-1001", "status": "Processing", "days_delta": 5},
+    {"order_number": "ORD-1002", "status": "Shipped", "days_delta": 3},
+    {"order_number": "ORD-1003", "status": "Delivered", "days_delta": -7},
+    {"order_number": "ORD-1004", "status": "Out for delivery", "days_delta": 1},
+    {"order_number": "ORD-1005", "status": "Processing", "days_delta": 10},
+    {"order_number": "ORD-1006", "status": "Shipped", "days_delta": 4},
+    {"order_number": "ORD-1007", "status": "Delivered", "days_delta": -2},
+    {"order_number": "ORD-1008", "status": "Processing", "days_delta": 8},
+    {"order_number": "ORD-1009", "status": "Shipped", "days_delta": 2},
+    {"order_number": "ORD-1010", "status": "Delivered", "days_delta": -14},
 ]
 
 
@@ -95,7 +95,7 @@ def run_seed():
         print("\nExample customer with order:")
         print("  Email: alicetan@example.com")
         print("  Password: password123")
-        print("  Example order: ORD-1001")
+        print("  Example order: ORD-10001")
 
     finally:
         db.close()

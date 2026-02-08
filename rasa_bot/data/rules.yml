@@ -1,3 +1,4 @@
+# rasa_bot/data/rules.yml
 version: "3.1"
 
 rules:
@@ -86,7 +87,6 @@ rules:
       - action: faq_search_form
       - active_loop: faq_search_form
 
-
   # =========================
   # History search form (hard logic)
   # =========================
@@ -145,7 +145,7 @@ rules:
       - intent: returns
       - action: utter_returns_policy
       - action: utter_show_quick_replies
-        
+
   # =========================
   # Human handover (hard business logic)
   # =========================
@@ -157,3 +157,58 @@ rules:
       - action: action_create_support_request
       - action: action_handover
       - action: utter_show_quick_replies
+
+  # =========================
+  # UX helper intents
+  # =========================
+
+  - rule: Rephrase prompt
+    steps:
+      - intent: rephrase
+      - action: utter_rephrase_prompt
+      - action: utter_show_quick_replies
+
+  - rule: Delete chat messages help
+    steps:
+      - intent: delete_chat_messages
+      - action: utter_delete_chat_messages_help
+      - action: utter_show_quick_replies
+
+  - rule: Edit last message help
+    steps:
+      - intent: edit_last_message
+      - action: utter_edit_last_message_help
+      - action: utter_show_quick_replies
+
+  # =========================
+  # Explicit support request (ticket only)
+  # =========================
+
+  - rule: Submit support request explicitly
+    steps:
+      - intent: submit_support_request
+      - action: utter_ticket_ack
+      - action: action_create_support_request
+      - action: utter_ticket_created
+      - action: utter_show_quick_replies
+
+  # =========================
+  # Fallback & ID Handling
+  # =========================
+
+  # Scenario 1: User provides an ID, and the bot UNDERSTANDS it (inform_order_id)
+  - rule: Process order ID (Confident)
+    condition:
+      - slot_was_set:
+          - order_id: true
+    steps:
+      - intent: inform_order_id
+      - action: action_check_order_status
+      - action: utter_show_quick_replies
+
+  # Fallback Path: This rule handles BOTH scenarios (ID found OR not found)
+  # We delegate the logic to 'action_smart_fallback' defined in config.yml
+  - rule: Implementation of the Two-Stage-Fallback
+    steps:
+      - intent: nlu_fallback
+      - action: action_smart_fallback

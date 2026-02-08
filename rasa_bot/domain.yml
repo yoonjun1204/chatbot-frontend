@@ -1,3 +1,4 @@
+# rasa_bot/domain.yml
 version: "3.1"
 
 intents:
@@ -37,12 +38,12 @@ entities:
 slots:
   order_id:
     type: text
-    influence_conversation: false
+    influence_conversation: true
     mappings:
       - type: from_entity
         entity: order_id
-      # fallback: 
-      # when NLU fails to extract the entity, but the form is requesting the order_id 
+      # fallback:
+      # when NLU fails to extract the entity, but the form is requesting the order_id
       # directly consume the text.
       - type: from_text
         conditions:
@@ -155,7 +156,7 @@ responses:
 
   utter_fallback:
     - text: "I'm sorry, I didn't understand that. You can ask about your order, products, returns, or search."
-  
+
   utter_default_feedback:
     - text: "I'm sorry, I didn't understand that. You can ask about your order, products, returns, or search."
 
@@ -168,6 +169,9 @@ actions:
   - action_restart
   - validate_order_status_form
   - action_default_fallback
+  - action_update_order_id
+  - action_handover_to_human
+  - action_smart_fallback
 session_config:
   session_expiration_time: 60
   carry_over_slots_to_new_session: false

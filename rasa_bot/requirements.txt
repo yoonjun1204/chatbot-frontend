@@ -1,1 +1,4 @@
+rasa-sdk
 rapidfuzz
+psycopg2-binary
+sqlalchemy<2.0

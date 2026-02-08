@@ -1,276 +1,298 @@
+# rasa_bot/data/nlu.yml
 version: "3.1"
 
 nlu:
-  # ---------- regex (order_id) ----------
+  # =======================
+  # Regex
+  # =======================
   - regex: order_id
     examples: |
-      - \bORD-\d{3,}\b
+      - \bORD-?\d{3,}\b
       - \bSIM-\d{4}-\d{2}\b
       - \b[A-Z]{1,3}\d{3,}\b
       - \b\d{5,}\b
 
-  # ---------- greet / goodbye / safety ----------
+  # =======================
+  # greet
+  # =======================
   - intent: greet
     examples: |
       - hi
       - hello
       - hey
+      - hi there
+      - hello there
       - good morning
       - good afternoon
       - good evening
-      - hello there
-      - hey support
-      - hi chatbot
-      - yo
+      - greetings
+      - good day
 
+  # =======================
+  # reset chat
+  # =======================
+  - intent: reset_chat
+    examples: |
+      - reset the conversation
+      - clear this conversation
+      - start the chat over
+      - restart the session
+      - wipe this chat history
+      - I want to continue but reset
+
+  # =======================
+  # goodbye
+  # =======================
   - intent: goodbye
     examples: |
-      - bye
+      - I am leaving now
+      - talk to you tomorrow
+      - close the session
+      - end the conversation
+      - that is all for today
       - goodbye
-      - thanks, bye
-      - that's all, thank you
-      - I am done
-      - end the chat
-      - you can close this now
-      - exit
-      - stop, thank you
-      - ok thanks, goodbye
 
+  # =======================
+  # bot_challenge
+  # =======================
   - intent: bot_challenge
     examples: |
-      - are you a bot
-      - are you a real person
-      - am I chatting with a human
-      - are you an AI
-      - is this automated
-      - is this a chatbot
-      - are you human
-      - who am I talking to
-      - what are you
-      - are you a robot
+      - are you a robot or a person?
+      - tell me your name
+      - what kind of AI are you?
+      - are you a computer program?
+      - who are you?
 
+  # =======================
+  # abusive
+  # =======================
   - intent: abusive
     examples: |
-      - you are useless
-      - this is stupid
-      - shut up
-      - you're dumb
-      - this is garbage
-      - you are wasting my time
-      - nonsense
+      - shut up you stupid bot
+      - you are a useless piece of software
+      - worst service ever
       - I hate this bot
-      - you can't do anything
-      - terrible service
+      - you suck so much
+      - this is frustrating
+      - you are not helping at all
+      - this system is useless
+      - I'm really annoyed right now
+      - this service is terrible
+      - you are wasting my time
 
-  # ---------- session control ----------
-  - intent: start_new_chat
-    examples: |
-      - start a new chat
-      - new chat please
-      - restart the conversation
-      - can we start over
-      - reset this chat
-      - begin a new session
-      - open a new support chat
-      - I want to start a new session
-      - clear the current chat and start again
-      - let's start fresh
-
-  # ---------- product / returns ----------
+  # =======================
+  # product_info
+  # =======================
   - intent: product_info
     examples: |
       - tell me about your products
       - what products do you sell
-      - do you have a catalogue
-      - show me your product list
-      - I want to know about your shirts
-      - what sizes do you have
-      - what materials are available
-      - do you sell t-shirts
-      - any new arrivals
-      - can you recommend a product
+      - show me your products
+      - what do you offer
+      - product information
+      - do you sell electronics
+      - what items are available
+      - can I see your catalogue
+      - what kind of products do you have
+      - show product list
+      - any products available
+      - what can I buy here
+      - what are your offerings
+      - what goods do you sell
+      - product details please
+      - tell me about your items
+      - list your products
+      - available products
+      - what services and products do you offer
+      - do you have accessories
+      - any new products
+      - product recommendations
+      - can you recommend something
+      - what items can I purchase
 
+  # =======================
+  # returns
+  # =======================
   - intent: returns
     examples: |
       - what is your return policy
       - can I return an item
-      - how do I exchange a product
-      - I want to do a refund
+      - how do returns work
+      - refund policy
+      - I want a refund
+      - can I exchange an item
+      - how do I return a product
+      - return instructions
+      - how long is the return period
       - can I get my money back
-      - how long do I have to return
-      - my item is damaged, can I return it
-      - I received the wrong item, can I exchange
-      - what are the refund steps
-      - do you accept exchanges
+      - item return process
+      - exchange policy
+      - return conditions
+      - refund process
+      - how to exchange product
+      - my item is damaged
+      - wrong item received
+      - return an order
+      - refund my purchase
+      - can I send this back
+      - what if product is faulty
+      - do you accept returns
+      - exchange my order
+      - return request
 
-  # ---------- order status (FORM) ----------
+  # =======================
+  # check_order_status
+  # =======================
   - intent: check_order_status
     examples: |
       - where is my order
-      - I want to track my order
       - check my order status
-      - can you tell me the status of my order
-      - is my order shipped yet
+      - track my order
+      - order status please
+      - can you track my order
+      - I want to know my order status
+      - is my order shipped
+      - has my order been delivered
+      - check delivery status
+      - order tracking
+      - where is my package
+      - shipment status
+      - track delivery
+      - order progress
+      - order update
+      - I need order status
+      - check shipping status
+      - delivery update
       - when will my order arrive
-      - track delivery for my order
-      - what is the progress of my order
-      - help me check shipping status
-      - I need an update on my order
+      - has my order arrived
+      - find my order
+      - check order
+      - order tracking status
+      - shipment update
 
+  # =======================
+  # inform_order_id
+  # =======================
   - intent: inform_order_id
     examples: |
       - my order id is [ORD-12345](order_id)
-      - order number [12345](order_id)
+      - order number is [12345](order_id)
       - it is [ORD-99881](order_id)
-      - the order id: [A100200](order_id)
       - [ORD-00077](order_id)
-      - it's for order [778899](order_id)
-      - use [ORD-54321](order_id) please
-      - tracking order [ORD-11223](order_id)
+      - tracking [ORD-11223](order_id)
+      - order id [SIM-2026-01](order_id)
       - the id is [991122](order_id)
-      - my order is [SIM-2026-01](order_id)
+      - use [ORD-54321](order_id)
+      - [A100200](order_id)
+      - order reference [778899](order_id)
+      - my order is [ORD-22222](order_id)
+      - here's my order id [ORD-33333](order_id)
+      - check [ORD-44444](order_id)
+      - order [ORD-55555](order_id)
+      - id [ORD-66666](order_id)
+      - order number [ORD-77777](order_id)
+      - use order [ORD-88888](order_id)
+      - reference [A90001](order_id)
+      - tracking id [ORD-99999](order_id)
+      - order code [123456](order_id)
+      - [ORD-11111](order_id)
+      - [ORD-00000](order_id)
+      - [ORD-12121](order_id)
+      - [SIM-2026-99](order_id)
+      - [ABC123](order_id)
+      - [XYZ789](order_id)
+      - [101010](order_id)
+      - [987654321](order_id)
 
+  # =======================
+  # update_order_details
+  # =======================
   - intent: update_order_details
     examples: |
-      - sorry I gave the wrong order number, it should be [ORD-22222](order_id)
-      - update the order id to [ORD-33333](order_id)
-      - I want to change the order number to [123456](order_id)
-      - correction: the order is [ORD-44444](order_id)
-      - my new order number is [A90001](order_id)
-      - please use [ORD-55555](order_id) instead
-      - I typed it wrongly, the correct id is [ORD-66666](order_id)
-      - replace my order id with [777888](order_id)
-      - can you update the order id to [ORD-77777](order_id)
-      - actually, my order number is [ORD-88888](order_id)
+      - wrong order id
+      - I made a mistake with the number
+      - use [ORD-33333](order_id) instead
+      - change my order id to [ORD-44444](order_id)
+      - that was the wrong id, use [ORD-11111](order_id)
+      - update it to [ORD-99999](order_id)
+      - typo in my id
 
-  # ---------- FAQ search (FORM-style pattern, but still intent-based) ----------
+  # =======================
+  # search_faq
+  # =======================
   - intent: search_faq
     examples: |
-      - search the FAQ
-      - can you check your FAQs
-      - I want to find an FAQ answer
-      - do you have an FAQ for this
-      - help me look up your FAQ
-      - find info in the FAQ
-      - I want to search help articles
-      - can you search your knowledge base
-      - look up an FAQ for me
-      - I need a quick FAQ answer
+      - search the faq for [refund](search_term)
+      - look up [shipping](search_term) in the help center
+      - check the faq about [warranty](search_term)
+      - find documentation on [return policy](search_term)
+      - help desk search for [delivery](search_term)
 
-  - intent: inform_faq_query
+  # =======================
+  # search_chat_history
+  # =======================
+  - intent: search_chat_history
     examples: |
-      - search for [refund policy](search_term)
-      - keyword [return](search_term)
-      - look up [shipping time](search_term)
-      - search [exchange](search_term)
-      - try [warranty](search_term)
-      - the topic is [late delivery](search_term)
-      - I want info about [size chart](search_term)
-      - please search [payment methods](search_term)
-      - find [order cancellation](search_term)
-      - query [wrong item received](search_term)
+      - search chat history
+      - find past messages about [refund](search_term)
+      - search old chats for [order status](search_term)
+      - look up previous messages on [shipping](search_term)
 
-  # ---------- handover / ticket ----------
+  # =======================
+  # human_handover
+  # =======================
   - intent: human_handover
     examples: |
-      - I want to talk to a human
-      - can you connect me to an agent
-      - escalate to human agent
-      - let me speak to a real person
-      - transfer me to support staff
-      - I need a human assistant
-      - please handover to an agent
-      - human agent please
-      - I want live support
-      - this chatbot cannot help, get a human
+      - connect me to an agent
+      - transfer to a person
+      - switch to live support
+      - speak to a representative
+      - I need to talk to someone real
 
+  # =======================
+  # submit_support_request
+  # =======================
   - intent: submit_support_request
     examples: |
-      - I want to submit a support request
-      - create a ticket for my issue
-      - please open a case for me
-      - log my enquiry as pending
-      - submit my issue to support
-      - raise a support request
-      - file a request for help
-      - can you create a support ticket
-      - I want to track my enquiry with a request
-      - please record my support request
+      - create a support ticket
+      - submit a support request
+      - open a ticket
+      - log a support request
+      - raise a ticket
+      - file a support request
+      - open a case
+      - submit my issue
+      - create a case for me
+      - record my request
+      - submit a help request
+      - raise an enquiry
+      - log my issue
+      - create support case
+      - open support request
+      - file an issue
+      - submit issue to support
+      - create service request
+      - open customer support ticket
+      - log a case
 
-  # ---------- chat history ----------
-  - intent: search_chat_history
-    # Merged examples from the deprecated `request_chat_history` intent to keep a single source of truth.
-    examples: |
-      - show my chat history
-      - I want to see previous conversations
-      - can I view my past chats
-      - open earlier messages
-      - let me check the conversation history
-      - show me what we discussed before
-      - display my previous chat log
-      - I need to review old messages
-      - where can I find my chat history
-      - show prior conversation
-      - search my chat history
-      - find past messages
-      - look for earlier replies
-      - can you search my previous chats
-      - locate old messages
-      - search earlier answers
-      - help me find an old conversation
-      - find something from my past chats
-      - search old chat records
-      - look up past conversations
-
-  - intent: inform_history_query
-    examples: |
-      - search my chat history for [refund](search_term)
-      - find past messages about [shipping](search_term)
-      - look for earlier replies on [return policy](search_term)
-      - search previous chats for [ORD-12345](search_term)
-      - find the conversation where we talked about [exchange](search_term)
-      - search old chats using [late delivery](search_term)
-      - can you search my history for [warranty](search_term)
-      - locate messages mentioning [cancel order](search_term)
-      - find my past chat about [wrong item](search_term)
-      - search earlier answers for [payment](search_term)
-
-  # ---------- rephrase / edit / privacy ----------
+  # =======================
+  # rephrase
+  # =======================
   - intent: rephrase
     examples: |
       - let me rephrase that
-      - I will say it another way
-      - I mean something else
-      - sorry, I explained it badly
-      - I want to clarify my question
-      - that is not what I meant
-      - you misunderstood me
-      - I want to reword my request
-      - let me clarify
-      - I'll try again with different words
+      - that's not what I meant earlier
+      - I want to explain my question differently
+      - let me clarify my previous message
+      - allow me to restate my question
 
-  - intent: delete_chat_messages
-    examples: |
-      - delete my messages
-      - remove previous messages from my view
-      - clear the chat on my screen
-      - I want to delete the chat history on this page
-      - erase the messages for privacy
-      - can I remove the conversation from my view
-      - clear chat messages
-      - delete previous chat messages
-      - remove old messages
-      - wipe the chat display
-
+  # =======================
+  # edit_last_message
+  # =======================
   - intent: edit_last_message
     examples: |
-      - I want to edit my last message
-      - can I correct what I said
-      - I made a typo, can I edit it
-      - let me change my previous reply
-      - I want to modify my last response
-      - can I update the message I sent
-      - I need to correct my enquiry
-      - please allow me to edit what I submitted
-      - I want to fix an error in my message
-      - I need to revise my previous message
+      - edit my previous message
+      - fix a typo in what I just sent
+      - change my last chat message
+      - I want to correct my last reply
+      - modify the message I just sent

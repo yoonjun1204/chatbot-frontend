@@ -58,11 +58,10 @@ services:
     volumes:
       - ./backend:/app
     environment:
-      # These now pull from your updated .env file
       DATABASE_URL: ${DATABASE_URL}
       RASA_URL: ${RASA_URL}
       RASA_WEBHOOK_URL: ${RASA_WEBHOOK_URL}
-      DB_USE_SSL: "true" # Neon requires SSL
+      DB_USE_SSL: "true"
       PORT: 8000
     ports:
       - "8000:8000"
@@ -82,9 +81,27 @@ services:
     container_name: chatbot_rasa
     user: root
     volumes:
-      # If your files are in rasa_bot, use: ./rasa_bot:/app
       - ./rasa_bot:/app
       - ./rasa_bot/models:/app/models
     ports:
       - "5005:5005"
     command: run --enable-api --cors "*" --debug
+    depends_on:
+      - action-server # Ensures action server starts first
+
+  # --- NEW SERVICE ---
+  action-server:
+    build:
+      context: ./rasa_bot
+      dockerfile: Dockerfile
+    container_name: chatbot_action_server
+    volumes:
+      # This assumes your actions.py is inside rasa_bot/actions/
+      - ./rasa_bot/actions:/app/actions
+    ports:
+      - "5055:5055"
+    command: ["start", "--actions", "actions", "--port", "5055"]
+    environment:
+      # This tells Docker: "Take the value from my host .env file
+      # and put it inside the container with the same name."
+      - DATABASE_URL=${DATABASE_URL}
