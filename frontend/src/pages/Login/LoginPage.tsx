@@ -162,7 +162,7 @@ const LoginPage: React.FC = () => {
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input
                   type="email"
-                  placeholder="name@shirtify.com"
+                  placeholder="name@example.com"
                   className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none transition-all"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

@@ -1,3 +1,4 @@
+# rasa_bot/config.yml
 recipe: default.v1
 
 assistant_id: 2026-jan-13-rasa_v1.0
@@ -5,52 +6,45 @@ assistant_id: 2026-jan-13-rasa_v1.0
 language: en
 
 pipeline:
-  # Divide string into token
   - name: WhitespaceTokenizer
-  
-  # Regular Expression Part
-  - name: RegexFeaturizer
+  - name: RegexFeaturizer # Keep this! It helps DIET see the pattern.
   - name: RegexEntityExtractor
-    case_sensitive: false
-    use_regexes: true
-    use_word_boundaries: true
-  
-  # Lexical and grammatical features
+    use_lookup_tables: True
+    use_regexes: True
+    use_word_boundaries: True
+
   - name: LexicalSyntacticFeaturizer
   - name: CountVectorsFeaturizer
-    analyzer: word
-    min_ngram: 1
-    max_ngram: 2
   - name: CountVectorsFeaturizer
     analyzer: char_wb
     min_ngram: 3
     max_ngram: 5
-    
+
   - name: DIETClassifier
-    epochs: 100       
+    epochs: 100
     constrain_similarities: true
-    entity_recognition: true
-    
+    entity_recognition: false # DIET handles all extraction
+    excluded_entities:
+      - order_id
+
   - name: EntitySynonymMapper
-  
   - name: FallbackClassifier
     threshold: 0.4
-    ambiguity_threshold: 0.1
 
 policies:
   - name: MemoizationPolicy
     max_history: 10
-    
+
   - name: TEDPolicy
     max_history: 10
     epochs: 100
     constrain_similarities: true
-    
+
   - name: UnexpecTEDIntentPolicy
     max_history: 10
     epochs: 100
-    
+
   - name: RulePolicy
-    core_fallback_threshold: 0.4
-    core_fallback_action_name: "action_default_fallback"
+    core_fallback_threshold: 0.3
+    core_fallback_action_name: "action_smart_fallback"
     enable_fallback_prediction: True

@@ -5,71 +5,105 @@ from typing import Any, Text, Dict, List, Optional
 
 from rasa_sdk import Action, Tracker, FormValidationAction
 from rasa_sdk.executor import CollectingDispatcher
-from rasa_sdk.events import SlotSet, Restarted
+from rasa_sdk.events import SlotSet, Restarted, UserUtteranceReverted, FollowupAction
 from rasa_sdk.types import DomainDict
 
 # Third-party library for fuzzy string matching
 from rapidfuzz import process, fuzz
 
+# SQLAlchemy for Database Connection (Raw SQL mode)
+from sqlalchemy import create_engine, text
+
 
 # =========================================================
-# Service Layer: Mock Database Service (Future-proof)
+# Service Layer: Real Database Service (Raw SQL)
 # =========================================================
 class DatabaseService:
     """
-    Service layer that simulates database access.
-    This class is designed to be replaced by a real PostgreSQL
-    implementation without changing the Action layer.
+    Service layer that connects to the real Neon Tech PostgreSQL database.
+    Uses Raw SQL to avoid duplicating model definitions.
     """
 
     def __init__(self):
-        # Mock order table
-        self.orders = {
-            "ORD-10001": {"status": "Processing", "delivery_date": "2026-02-01"},
-            "ORD-10002": {"status": "Shipped", "delivery_date": "2026-01-25"},
-            "ORD-10003": {"status": "Delivered", "delivery_date": "2026-01-20"},
-        }
+        # Read the DATABASE_URL from the Docker environment variables
+        self.db_url = os.environ.get("DATABASE_URL")
+        self.engine = None
 
-        # Mock chat history table
+        if not self.db_url:
+            print("WARNING: DATABASE_URL not found. DB calls will fail.")
+        else:
+            try:
+                # Neon requires SSL, usually handled by the URL params or default in sqlalchemy
+                self.engine = create_engine(self.db_url)
+                print("INFO: Database connection configured successfully.")
+            except Exception as e:
+                print(f"ERROR: Failed to configure database engine: {e}")
+
+        # --- MOCKED DATA (Only for Support & History) ---
         self.chat_history = [
             {
                 "sender": "user",
                 "message": "I want to return an item",
-                "time": "2025-12-01 10:00:00",
+                "time": "2025-12-01",
             },
             {
                 "sender": "bot",
                 "message": "You can return items within 30 days.",
-                "time": "2025-12-01 10:00:05",
-            },
-            {
-                "sender": "user",
-                "message": "How do I track my order ORD-10002?",
-                "time": "2026-01-15 09:30:00",
-            },
-            {
-                "sender": "bot",
-                "message": "Your order ORD-10002 is currently shipped.",
-                "time": "2026-01-15 09:30:10",
+                "time": "2025-12-01",
             },
         ]
 
     def get_order_status(self, order_id: Text) -> Optional[Dict[Text, Any]]:
         """
-        Retrieve order status for a given order ID.
+        Retrieve order status from the REAL 'orders' table using SQL.
         """
-        return self.orders.get(order_id)
+        if not self.engine:
+            print("ERROR: No DB engine available.")
+            return None
+
+        try:
+            # We use a context manager to open/close the connection automatically
+            with self.engine.connect() as connection:
+                # SQL Query using the columns you provided
+                # We use :order_id for safe parameter binding (prevents SQL injection)
+                query = text(
+                    """
+                    SELECT status, estimated_delivery 
+                    FROM orders 
+                    WHERE order_number = :order_id
+                """
+                )
+
+                result = (
+                    connection.execute(query, {"order_id": order_id}).mappings().first()
+                )
+
+                if result:
+                    return {
+                        "status": result["status"],
+                        # Convert date object to string if it exists
+                        "delivery_date": (
+                            str(result["estimated_delivery"])
+                            if result["estimated_delivery"]
+                            else "Unknown"
+                        ),
+                    }
+                return None
+
+        except Exception as e:
+            print(f"ERROR: DB Query failed: {e}")
+            return None
 
     def create_support_ticket(self, issue_description: Text) -> Text:
         """
-        Simulate creating a support ticket.
+        STUB: Simulate creating a support ticket.
         """
-        ticket_id = f"TICKET-{len(self.orders) + 1000}"
-        return ticket_id
+        # Placeholder ID
+        return "TICKET-NEW"
 
     def search_chat_history(self, keyword: Text) -> List[Dict[str, str]]:
         """
-        Search chat history messages by keyword.
+        STUB: Search chat history messages by keyword.
         """
         keyword_lower = keyword.lower()
         return [
@@ -85,6 +119,7 @@ db_service = DatabaseService()
 
 ORD_PAT = re.compile(r"\bORD[-\s]?\d{3,}\b", re.IGNORECASE)
 DIGITS_PAT = re.compile(r"\b\d{5,}\b")
+
 
 def _normalize_order_id(raw: str) -> Optional[str]:
     if not raw:
@@ -108,6 +143,7 @@ def _normalize_order_id(raw: str) -> Optional[str]:
         return f"ORD-{s}"
 
     return None
+
 
 def _extract_order_id_from_text(text: str) -> Optional[str]:
     if not text:
@@ -176,7 +212,7 @@ class ValidateOrderStatusForm(FormValidationAction):
             )
             return {"order_id": None}
 
-        # 4) Accept the single normalized value (NO DB existence check here)
+        # 4) Accept the single normalized value
         return {"order_id": normalized[0]}
 
 
@@ -196,7 +232,9 @@ class ActionCheckOrderStatus(Action):
             dispatcher.utter_message(text="No order ID provided.")
             return []
 
+        # Call the REAL database service
         order = db_service.get_order_status(order_id)
+
         if order:
             dispatcher.utter_message(
                 text=(
@@ -205,8 +243,11 @@ class ActionCheckOrderStatus(Action):
                 )
             )
         else:
-            dispatcher.utter_message(text="Unable to retrieve order details.")
+            dispatcher.utter_message(
+                text=f"I searched our database but couldn't find order {order_id}. Please double check the number."
+            )
 
+        # RESET THE SLOT TO STOP LOOPS
         return [SlotSet("order_id", None)]
 
 
@@ -219,13 +260,10 @@ class ActionCreateSupportRequest(Action):
     ) -> List[Dict[Text, Any]]:
 
         issue_description = tracker.latest_message.get("text", "")
-        ticket_id = db_service.create_support_ticket(issue_description)
+        db_service.create_support_ticket(issue_description)
 
         dispatcher.utter_message(response="utter_ticket_ack")
         dispatcher.utter_message(response="utter_ticket_created")
-        # Optional: expose ticket ID
-        # dispatcher.utter_message(text=f"Your ticket ID is {ticket_id}")
-
         return []
 
 
@@ -265,6 +303,7 @@ class ActionSearchFaq(Action):
             except Exception:
                 knowledge_base = []
 
+        # Fallback KB if file missing
         if not knowledge_base:
             knowledge_base = [
                 {
@@ -336,25 +375,34 @@ class ActionRestart(Action):
         dispatcher.utter_message(response="utter_restart_ack")
         return [Restarted()]
 
-# =========================================================
-# Core Fallback Action (RulePolicy)
-# =========================================================
+
 class ActionDefaultFallback(Action):
-    """Default fallback action used by Core (RulePolicy).
-
-    This action must exist because `config.yml` sets:
-        RulePolicy.core_fallback_action_name: "action_default_fallback"
-
-    It responds with the standard fallback utterance and then shows quick replies
-    to help users recover.
-    """
-
     def name(self) -> Text:
         return "action_default_fallback"
 
     def run(
         self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: DomainDict
     ) -> List[Dict[Text, Any]]:
-        dispatcher.utter_message(response="utter_fallback")
+        dispatcher.utter_message(response="utter_default_feedback")
         dispatcher.utter_message(response="utter_show_quick_replies")
         return []
+
+
+class ActionSmartFallback(Action):
+    def name(self) -> Text:
+        return "action_smart_fallback"
+
+    def run(
+        self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: DomainDict
+    ) -> List[Dict[Text, Any]]:
+
+        order_id = tracker.get_slot("order_id")
+
+        if order_id:
+            # Found ID? Go check it!
+            return [FollowupAction("action_check_order_status")]
+
+        # No ID? Fallback as usual.
+        dispatcher.utter_message(response="utter_default_feedback")
+        dispatcher.utter_message(response="utter_show_quick_replies")
+        return [UserUtteranceReverted()]

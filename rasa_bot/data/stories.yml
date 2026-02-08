@@ -1,3 +1,4 @@
+# rasa_bot/data/stories.yml
 version: "3.1"
 
 stories:
@@ -10,29 +11,29 @@ stories:
       - intent: greet
       - action: utter_greet
       - action: utter_show_quick_replies
-      
+
       # User initiates the form
       - intent: check_order_status
       - action: order_status_form
       - active_loop: order_status_form
-      
+
       # User provides the ID.
       # Note: The Rule handles the submission logic (closing loop, running check action).
       # In stories, we simply show the successful flow continuing.
       - intent: inform_order_id
         entities:
           - order_id: "ORD-12345"
-      
+
       # The form closes (handled by rule), and the bot shows the result
       - action: order_status_form
       - active_loop: null
       - slot_was_set:
           - requested_slot: null
-      
+
       # The outcome action defined in your Rule
       - action: action_check_order_status
       - action: utter_show_quick_replies
-      
+
       # Conversation ends gracefully
       - intent: goodbye
       - action: utter_goodbye
@@ -46,18 +47,18 @@ stories:
       - intent: search_faq
       - action: faq_search_form
       - active_loop: faq_search_form
-      
+
       # User provides keyword
       - intent: inform_faq_query
         entities:
           - search_term: "return policy"
-          
+
       # Form submission flow
       - action: faq_search_form
       - active_loop: null
       - slot_was_set:
           - requested_slot: null
-      
+
       - action: action_search_faq
       - action: utter_show_quick_replies
 
@@ -75,7 +76,7 @@ stories:
       - active_loop: null
       - action: action_check_order_status
       - action: utter_show_quick_replies
-      
+
       # --- Part 2: Switch to FAQ ---
       # User is not done yet, they immediately start another task
       - intent: search_faq
@@ -98,14 +99,14 @@ stories:
       - active_loop: null
       - action: action_search_faq
       - action: utter_show_quick_replies
-      
+
       # 2. Search History
       - intent: search_chat_history
       - action: history_search_form
       - active_loop: null
       - action: action_search_chat_history
       - action: utter_show_quick_replies
-      
+
       # 3. Give up and ask for human
       - intent: human_handover
       - action: utter_handover_ack
@@ -122,7 +123,7 @@ stories:
       - intent: inform_faq_query
         entities:
           - search_term: "refund"
-      
+
       # Because the Rule "Activate FAQ Search Form (Direct Inquiry)" exists,
       # The form starts, validates the slot immediately, and closes.
       - action: faq_search_form
