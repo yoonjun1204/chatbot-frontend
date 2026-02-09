@@ -1,0 +1,28 @@
+# Environment variables example file
+# # Database
+# POSTGRES_DB=chatbot_db
+# POSTGRES_USER=chatbot_user
+# POSTGRES_PASSWORD=chatbot_password
+
+# # Backend DB URL (used inside backend container)
+# DATABASE_URL=postgresql+psycopg2://chatbot_user:chatbot_password@db:5432/chatbot_db
+
+# # Rasa URL (used inside backend container)
+# RASA_URL=http://rasa:5005/model/parse
+
+# # Frontend → API URLs (used at build time by Vite)
+# VITE_API_BASE_URL=http://localhost:8000
+# VITE_RASA_BASE_URL=http://localhost:5005
+
+# 1. DATABASE: Replace with your Neon Connection String
+# Use the 'psycopg2' variant for your SQLAlchemy backend
+DATABASE_URL=postgresql://neondb_owner:npg_kwJ1Dny7hYPW@ep-purple-mouse-a1ar1vla-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+DB_USE_SSL=true
+
+# 2. RASA: Point to Google Cloud Run instead of 'http://rasa:5005'
+RASA_URL=https://rasa-chatbot-784693230618.asia-southeast1.run.app/model/parse
+RASA_WEBHOOK_URL=https://rasa-chatbot-784693230618.asia-southeast1.run.app/webhooks/rest/webhook
+
+# 3. FRONTEND: If you want your local React to talk to your LOCAL backend code 
+# but your backend code to talk to CLOUD services, keep this as localhost:8000.
+VITE_API_BASE_URL=http://localhost:8000

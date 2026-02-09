@@ -1,4 +1,4 @@
-# Python
+# ===== Python =====
 __pycache__/
 *.py[cod]
 *.class
@@ -8,33 +8,33 @@ venv/
 .venv/
 env/
 
+# Environment variables
+.env
+
 # OS / Editor
 .DS_Store
 .idea/
 .vscode/
 *.swp
 
-# Rasa
+# ===== Rasa =====
 rasa_bot/.rasa/
 rasa_bot/.cache/
 rasa_bot/results/
+rasa_bot/models/
 
-# Databases
+# ===== Databases =====
 *.db
 *.db-journal
+*.sqlite3
 
-# Outputs
+# ===== Outputs & Logs =====
 results/
 reports/
-
-# Logs
 *.log
 logs/
 
-# Environment variables
-.env
-
-# Frontend
-frontend/node_modules/
-frontend/dist/
-frontend/build/
+# ===== Node / Frontend =====
+node_modules/
+dist/
+build/
