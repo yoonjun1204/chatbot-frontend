@@ -384,7 +384,6 @@ class ActionDefaultFallback(Action):
         self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: DomainDict
     ) -> List[Dict[Text, Any]]:
         dispatcher.utter_message(response="utter_default_feedback")
-        dispatcher.utter_message(response="utter_show_quick_replies")
         return []
 
 
@@ -404,5 +403,4 @@ class ActionSmartFallback(Action):
 
         # No ID? Fallback as usual.
         dispatcher.utter_message(response="utter_default_feedback")
-        dispatcher.utter_message(response="utter_show_quick_replies")
         return [UserUtteranceReverted()]

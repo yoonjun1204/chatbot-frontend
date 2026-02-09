@@ -11,7 +11,6 @@ rules:
     steps:
       - intent: greet
       - action: utter_greet
-      - action: utter_show_quick_replies
 
   - rule: Goodbye
     steps:
@@ -22,13 +21,11 @@ rules:
     steps:
       - intent: bot_challenge
       - action: utter_bot_identity
-      - action: utter_show_quick_replies
 
   - rule: Handle abusive language
     steps:
       - intent: abusive
       - action: utter_abusive_warning
-      - action: utter_show_quick_replies
 
   - rule: Start a new chat (restart)
     # NOTE: action_restart resets tracker state; keep it as a rule for reliability.
@@ -56,7 +53,6 @@ rules:
       - slot_was_set:
           - requested_slot: null
       - action: action_check_order_status
-      - action: utter_show_quick_replies
 
   # =========================
   # FAQ search form (hard logic)
@@ -76,7 +72,6 @@ rules:
       - slot_was_set:
           - requested_slot: null
       - action: action_search_faq
-      - action: utter_show_quick_replies
 
   # allow user providing keyword intent while form is active
   - rule: Allow FAQ keyword during form
@@ -105,7 +100,6 @@ rules:
       - slot_was_set:
           - requested_slot: null
       - action: action_search_chat_history
-      - action: utter_show_quick_replies
 
   - rule: Allow history keyword during form
     condition:
@@ -138,13 +132,11 @@ rules:
     steps:
       - intent: product_info
       - action: utter_product_info
-      - action: utter_show_quick_replies
 
   - rule: Respond to returns policy
     steps:
       - intent: returns
       - action: utter_returns_policy
-      - action: utter_show_quick_replies
 
   # =========================
   # Human handover (hard business logic)
@@ -156,7 +148,6 @@ rules:
       - action: utter_handover_ack
       - action: action_create_support_request
       - action: action_handover
-      - action: utter_show_quick_replies
 
   # =========================
   # UX helper intents
@@ -166,19 +157,16 @@ rules:
     steps:
       - intent: rephrase
       - action: utter_rephrase_prompt
-      - action: utter_show_quick_replies
 
   - rule: Delete chat messages help
     steps:
       - intent: delete_chat_messages
       - action: utter_delete_chat_messages_help
-      - action: utter_show_quick_replies
 
   - rule: Edit last message help
     steps:
       - intent: edit_last_message
       - action: utter_edit_last_message_help
-      - action: utter_show_quick_replies
 
   # =========================
   # Explicit support request (ticket only)
@@ -190,7 +178,6 @@ rules:
       - action: utter_ticket_ack
       - action: action_create_support_request
       - action: utter_ticket_created
-      - action: utter_show_quick_replies
 
   # =========================
   # Fallback & ID Handling
@@ -204,7 +191,6 @@ rules:
     steps:
       - intent: inform_order_id
       - action: action_check_order_status
-      - action: utter_show_quick_replies
 
   # Fallback Path: This rule handles BOTH scenarios (ID found OR not found)
   # We delegate the logic to 'action_smart_fallback' defined in config.yml

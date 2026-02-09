@@ -101,18 +101,6 @@ responses:
   utter_restart_ack:
     - text: "Okay, starting a new session now..."
 
-  utter_show_quick_replies:
-    - text: "Here are some things you can do:"
-      buttons:
-        - title: "Check Order Status"
-          payload: "/check_order_status"
-        - title: "Search FAQ"
-          payload: "/search_faq"
-        - title: "Search Chat History"
-          payload: "/search_chat_history"
-        - title: "Talk to Human"
-          payload: "/human_handover"
-
   # --- Business ---
   utter_product_info:
     - text: "We sell a wide range of electronics and accessories. Check our website for the full catalogue!"
