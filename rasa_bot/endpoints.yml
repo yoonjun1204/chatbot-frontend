@@ -40,8 +40,10 @@
 #  username: username
 #  password: password
 #  queue: queue
-# action_endpoint:
-#   url: "http://chatbot_action_server:5055/webhook"
 
+# UNCOMMENT IT IF YOU WANT TO TEST LOCAL
 action_endpoint:
-  url: "https://action-server-784693230618.asia-southeast1.run.app/webhook"
+  url: "http://chatbot_action_server:5055/webhook"
+
+# action_endpoint:
+#   url: "https://action-server-784693230618.asia-southeast1.run.app/webhook"

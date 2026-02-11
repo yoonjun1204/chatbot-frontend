@@ -16,33 +16,39 @@ router = APIRouter()
 def list_users(
     search: Optional[str] = None,
     db: Session = Depends(get_db),
-    admin: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ):
-    # Start the query targeting only admins and agents
-    query = db.query(User).filter(User.role.in_(["admin", "agent"]))
+    # 🟢 FIX: Include 'customer' in the query so the Dashboard can count them
+    query = db.query(User).filter(User.role.in_(["admin", "agent", "customer"]))
 
-    # APPLIED FIX: If search text exists, filter by email (case-insensitive)
     if search:
-        # User.email.ilike matches case-insensitive.
-        # using %{}% allows partial matches.
         query = query.filter(User.email.ilike(f"%{search}%"))
 
     users = query.all()
 
     result = []
     for u in users:
-        # ... (rest of your existing logic remains the same)
+        # Default access for agents
         access = u.access or {
             "can_view_chats": True,
             "can_reply": True,
-            "can_close_chat": True,
+            "can_close_chat": False,
         }
 
+        # Override for Admins (Full Control)
         if u.role == "admin":
             access = {
                 "can_view_chats": True,
                 "can_reply": True,
                 "can_close_chat": True,
+            }
+
+        # 🟢 NEW: Override for Customers (Limited Control/View only)
+        elif u.role == "customer":
+            access = {
+                "can_view_chats": False,
+                "can_reply": False,
+                "can_close_chat": False,
             }
 
         result.append(

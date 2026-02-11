@@ -1,81 +1,7 @@
-# Docker Compose configuration for Rasa chatbot with PostgreSQL, backend, and frontend
-# services:
-#   db:
-#     image: postgres:16
-#     container_name: chatbot_db
-#     restart: unless-stopped
-#     environment:
-#       POSTGRES_DB: chatbot_db
-#       POSTGRES_USER: chatbot_user
-#       POSTGRES_PASSWORD: chatbot_password
-#       TZ: Asia/Singapore
-#       PGTZ: Asia/Singapore
-#     volumes:
-#       - db_data:/var/lib/postgresql/data
-#     ports:
-#       - "5432:5432" # optional: expose for pgAdmin / local tools
-
-#   rasa:
-#     image: rasa/rasa:3.6.20-full
-#     container_name: chatbot_rasa
-#     restart: unless-stopped
-#     working_dir: /app
-#     user: root #  Change to the root
-#     volumes:
-#       - ./rasa_bot:/app # your bot project (domain.yml, nlu.yml, etc.)
-#       #- rasa_models:/app/models  # named volume for trained models
-#     command: >
-#       run --enable-api --cors "*" --port 5005
-#     ports:
-#       - "5005:5005"
-
-#   action_server:
-#     #    image: rasa/rasa-sdk:3.6.2
-#     build:
-#       context: ./rasa_bot
-#       dockerfile: Dockerfile
-#     container_name: chatbot_action_server
-#     restart: unless-stopped
-#     working_dir: /app
-#     #    user: root  # Same as rasa
-#     volumes:
-#       # Path
-#       - ./rasa_bot/actions:/app/actions
-#     ports:
-#       - "5055:5055"
-#     command:
-#       - start
-#       - --actions
-#       - actions
-#       - --debug
+# docker-compose.yaml
 
 services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: chatbot_backend
-    volumes:
-      - ./backend:/app
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      RASA_URL: ${RASA_URL}
-      RASA_WEBHOOK_URL: ${RASA_WEBHOOK_URL}
-      DB_USE_SSL: "true"
-      PORT: 8000
-    ports:
-      - "8000:8000"
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_BASE_URL: http://localhost:8000
-    container_name: chatbot_frontend
-    ports:
-      - "5173:80"
-
+  # 🟢 1. RASA (The Slow Starter)
   rasa:
     image: rasa/rasa:3.6.20-full
     container_name: chatbot_rasa
@@ -87,21 +13,67 @@ services:
       - "5005:5005"
     command: run --enable-api --cors "*" --debug
     depends_on:
-      - action-server # Ensures action server starts first
+      - action-server
+    # ✅ HEALTHCHECK: Docker checks if Rasa is ready every 10s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5005/"]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+      start_period: 20s
 
-  # --- NEW SERVICE ---
+  # 🟢 2. ACTION SERVER
   action-server:
     build:
       context: ./rasa_bot
       dockerfile: Dockerfile
     container_name: chatbot_action_server
     volumes:
-      # This assumes your actions.py is inside rasa_bot/actions/
       - ./rasa_bot/actions:/app/actions
     ports:
       - "5055:5055"
     command: ["start", "--actions", "actions", "--port", "5055"]
     environment:
-      # This tells Docker: "Take the value from my host .env file
-      # and put it inside the container with the same name."
       - DATABASE_URL=${DATABASE_URL}
+    # ✅ HEALTHCHECK: Ensures action server is up
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5055/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 🟢 3. BACKEND (Waits for Rasa)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chatbot_backend
+    volumes:
+      - ./backend:/app
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      # ⚠️ IMPORTANT: In your .env, this must be http://rasa:5005
+      RASA_URL: ${RASA_URL}
+      RASA_WEBHOOK_URL: ${RASA_WEBHOOK_URL}
+      DB_USE_SSL: "true"
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    # ✅ DEPENDS_ON: Backend will WAIT here until Rasa says "I am healthy"
+    depends_on:
+      rasa:
+        condition: service_healthy
+      action-server:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8000
+    container_name: chatbot_frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend

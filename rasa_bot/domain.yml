@@ -9,23 +9,15 @@ intents:
   - start_new_chat
   - product_info
   - returns
-
-  # Order
   - check_order_status
   - inform_order_id
   - update_order_details
-
-  # Search flows
   - search_faq
   - search_chat_history
   - inform_faq_query
   - inform_history_query
-
-  # Handover / ticket
   - human_handover
   - submit_support_request
-
-  # UX helpers
   - rephrase
   - delete_chat_messages
   - edit_last_message
@@ -42,9 +34,6 @@ slots:
     mappings:
       - type: from_entity
         entity: order_id
-      # fallback:
-      # when NLU fails to extract the entity, but the form is requesting the order_id
-      # directly consume the text.
       - type: from_text
         conditions:
           - active_loop: order_status_form
@@ -85,7 +74,6 @@ forms:
       - search_term
 
 responses:
-  # --- Basic ---
   utter_greet:
     - text: "Hi there! I'm your virtual assistant. How can I help you today?"
 
@@ -101,28 +89,24 @@ responses:
   utter_restart_ack:
     - text: "Okay, starting a new session now..."
 
-  # --- Business ---
   utter_product_info:
     - text: "We sell a wide range of electronics and accessories. Check our website for the full catalogue!"
 
   utter_returns_policy:
     - text: "You can return items within 30 days of receipt if they are in original condition."
 
-  # --- Form prompts ---
   utter_ask_order_id:
     - text: "Could you please provide your Order ID? (e.g., ORD-12345)"
 
   utter_ask_search_term:
     - text: "What keyword should I search for?"
 
-  # Optional: keep separate wording but map to the same requested slot
   utter_ask_faq_search_form_search_term:
     - text: "Sure—what topic would you like to search in our FAQ?"
 
   utter_ask_history_search_form_search_term:
     - text: "I can search your chat history. What keyword should I look for?"
 
-  # --- Handover / ticket ---
   utter_handover_ack:
     - text: "I see you need human assistance. Let me connect you."
 
@@ -132,7 +116,6 @@ responses:
   utter_ticket_created:
     - text: "Ticket created successfully!"
 
-  # --- UX helpers ---
   utter_rephrase_prompt:
     - text: "I'm sorry, I didn't quite catch that. Could you rephrase?"
 
@@ -160,6 +143,7 @@ actions:
   - action_update_order_id
   - action_handover_to_human
   - action_smart_fallback
+
 session_config:
   session_expiration_time: 60
   carry_over_slots_to_new_session: false

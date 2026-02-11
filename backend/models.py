@@ -27,12 +27,15 @@ class Conversation(Base):
     __tablename__ = "conversations"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    user_id = Column(String, index=True)
     title = Column(String, default="New Chat")
+    # Values: "active_bot", "waiting_for_agent", "active_agent"
+    status = Column(String, default="active_bot")
     created_at = Column(DateTime(timezone=True), server_default=text("NOW()"))
     updated_at = Column(
         DateTime(timezone=True), server_default=text("now()"), onupdate=text("now()")
     )
+    assigned_agent_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     messages = relationship(
         "Message", back_populates="conversation", cascade="all, delete-orphan"
@@ -62,7 +65,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
-    password = Column(String, nullable=False)  # simple for demo/FYP
+    hashed_password = Column(String)
     name = Column(String, nullable=True)
 
     # NEW: role for access control
@@ -101,6 +104,7 @@ class ChatLog(Base):
     __tablename__ = "chat_logs"
 
     id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(Integer, ForeignKey("conversations.id"), nullable=True)
     timestamp = Column(
         DateTime(timezone=True), server_default=text("now()"), onupdate=text("now()")
     )

@@ -1,34 +1,54 @@
 # backend/dependencies.py
-from fastapi import Header, HTTPException, Depends
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User
-from typing import Optional
+
+# 👇 Import the config from your password_hash file
+from password_hash import SECRET_KEY, ALGORITHM
+
+# This tells FastAPI to look for the token in the "Authorization: Bearer ..." header
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/login")
 
 
-# Dependency to get current user from headers (simple FYP auth)
 def get_current_user(
-    current_user_id: Optional[str] = Header(None, alias="user_id"),  # Change int to str
-    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ):
-    if not current_user_id:
-        raise HTTPException(status_code=401, detail="Missing user_id header")
+    """
+    Validates the JWT token and returns the current user.
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
-    # Try to convert to int, if it fails (like "anonymous"), it's not a valid Admin/Agent
     try:
-        user_id_int = int(current_user_id)
-        user = db.query(User).filter(User.id == user_id_int).first()
-    except ValueError:
-        # It's a string like "anonymous", which isn't in the User table
-        raise HTTPException(status_code=404, detail="User not found (Non-numeric ID)")
+        # 🟢 VERIFY: Decode the token using the secret key
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+
+    except JWTError:
+        raise credentials_exception
+
+    # 🔵 FETCH: Get the user from the database
+    user = db.query(User).filter(User.email == email).first()
+    if user is None:
+        raise credentials_exception
 
     return user
 
 
 def require_admin(user: User = Depends(get_current_user)):
+    """
+    Ensures the logged-in user is an Admin.
+    """
     if user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     return user

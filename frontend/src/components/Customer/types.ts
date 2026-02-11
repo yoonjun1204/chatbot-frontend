@@ -1,4 +1,7 @@
-export type Sender = "user" | "bot";
+// --- frontend/src/components/Customer/types.ts ---
+export type Sender = "user" | "bot" | "agent";
+export type ChatStatus = "active_bot" | "waiting_for_agent" | "active_agent";
+
 
 export interface ChatMessage {
     id: number;
@@ -36,4 +39,6 @@ export interface ConversationHistory {
     id: number;
     title: string;
     updated_at: string;
+    status: ChatStatus;
+
 }

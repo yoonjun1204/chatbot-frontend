@@ -109,6 +109,7 @@ nlu:
       - product recommendations
       - can you recommend something
       - what items can I purchase
+      - ask about shirts
 
   # =======================
   # returns

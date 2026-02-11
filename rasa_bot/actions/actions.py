@@ -275,7 +275,24 @@ class ActionHandover(Action):
         self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: DomainDict
     ) -> List[Dict[Text, Any]]:
 
-        dispatcher.utter_message(response="utter_handover_ack")
+        # 1. Get the conversation ID (Rasa stores this as sender_id)
+        conversation_id = tracker.sender_id
+
+        # 2. Update DB status to 'waiting_for_agent'
+        # Since we are using Raw SQL in db_service, add a method there or execute directly
+        try:
+            with db_service.engine.connect() as connection:
+                query = text(
+                    "UPDATE conversations SET status = 'waiting_for_agent' WHERE id = :cid"
+                )
+                connection.execute(query, {"cid": conversation_id})
+                connection.commit()  # Important for some DB drivers
+        except Exception as e:
+            print(f"DB Update failed: {e}")
+
+        dispatcher.utter_message(
+            text="Okay, I am connecting you to a human agent now. Please hold on."
+        )
         return []
 
 

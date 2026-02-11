@@ -22,6 +22,7 @@ export interface ChatLog {
   confidence: number;
   response_time_ms: number;
   is_escalated: boolean;
+  conversation_id?: number;
 }
 
 export interface PerformanceReport {

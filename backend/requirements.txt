@@ -5,3 +5,7 @@ pydantic
 psycopg2-binary
 python-dotenv
 requests
+alembic
+passlib
+argon2-cffi
+python-jose[cryptography]

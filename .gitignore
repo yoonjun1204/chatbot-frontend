@@ -21,7 +21,7 @@ env/
 rasa_bot/.rasa/
 rasa_bot/.cache/
 rasa_bot/results/
-rasa_bot/models/
+#rasa_bot/models/
 
 # ===== Databases =====
 *.db

@@ -4,7 +4,6 @@ version: "3.1"
 rules:
   # =========================
   # Global / deterministic rules
-  # Keep rules minimal to avoid "if-else bot"
   # =========================
 
   - rule: Greeting
@@ -28,14 +27,13 @@ rules:
       - action: utter_abusive_warning
 
   - rule: Start a new chat (restart)
-    # NOTE: action_restart resets tracker state; keep it as a rule for reliability.
     steps:
       - intent: start_new_chat
       - action: utter_restart_ack
       - action: action_restart
 
   # =========================
-  # Order status form (hard business logic)
+  # Order status form
   # =========================
 
   - rule: Activate order status form
@@ -55,7 +53,7 @@ rules:
       - action: action_check_order_status
 
   # =========================
-  # FAQ search form (hard logic)
+  # FAQ search form
   # =========================
   - rule: Activate FAQ search form
     steps:
@@ -73,7 +71,6 @@ rules:
           - requested_slot: null
       - action: action_search_faq
 
-  # allow user providing keyword intent while form is active
   - rule: Allow FAQ keyword during form
     condition:
       - active_loop: faq_search_form
@@ -83,7 +80,7 @@ rules:
       - active_loop: faq_search_form
 
   # =========================
-  # History search form (hard logic)
+  # History search form
   # =========================
   - rule: Activate history search form
     steps:
@@ -109,17 +106,17 @@ rules:
       - action: history_search_form
       - active_loop: history_search_form
 
-  # Allow correcting order_id while the form is active (do NOT deactivate the loop)
+  # =========================
+  # Form Corrections
+  # =========================
   - rule: Allow order id correction during form
     condition:
       - active_loop: order_status_form
     steps:
       - intent: update_order_details
-      # The form action will re-run and extract the latest order_id entity into the slot.
       - action: order_status_form
       - active_loop: order_status_form
 
-  # Also allow providing order_id (explicitly) during the form
   - rule: Allow order id info during form
     condition:
       - active_loop: order_status_form
@@ -128,6 +125,9 @@ rules:
       - action: order_status_form
       - active_loop: order_status_form
 
+  # =========================
+  # Single Actions
+  # =========================
   - rule: Respond to product info
     steps:
       - intent: product_info
@@ -139,9 +139,8 @@ rules:
       - action: utter_returns_policy
 
   # =========================
-  # Human handover (hard business logic)
+  # Human handover
   # =========================
-
   - rule: Escalate to human agent
     steps:
       - intent: human_handover
@@ -152,7 +151,6 @@ rules:
   # =========================
   # UX helper intents
   # =========================
-
   - rule: Rephrase prompt
     steps:
       - intent: rephrase
@@ -169,9 +167,8 @@ rules:
       - action: utter_edit_last_message_help
 
   # =========================
-  # Explicit support request (ticket only)
+  # Explicit support request
   # =========================
-
   - rule: Submit support request explicitly
     steps:
       - intent: submit_support_request
@@ -182,8 +179,6 @@ rules:
   # =========================
   # Fallback & ID Handling
   # =========================
-
-  # Scenario 1: User provides an ID, and the bot UNDERSTANDS it (inform_order_id)
   - rule: Process order ID (Confident)
     condition:
       - slot_was_set:
@@ -192,8 +187,6 @@ rules:
       - intent: inform_order_id
       - action: action_check_order_status
 
-  # Fallback Path: This rule handles BOTH scenarios (ID found OR not found)
-  # We delegate the logic to 'action_smart_fallback' defined in config.yml
   - rule: Implementation of the Two-Stage-Fallback
     steps:
       - intent: nlu_fallback

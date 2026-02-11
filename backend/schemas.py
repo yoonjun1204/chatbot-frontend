@@ -13,7 +13,7 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     conversation_id: int
-    reply: str
+    reply: str | None = None
     intent: Optional[str] = "unknown"
     entities: Optional[Dict[str, Any]] = {}
     quick_replies: Optional[List[str]] = []
@@ -53,13 +53,13 @@ class CreateAgentRequest(BaseModel):
 
 # --- LogsAndPerformance.py ---
 class ChatLogBase(BaseModel):
-    actor_id: str
+    actor_id: str | None = None
     actor_email: Optional[str] = "anonymous"
-    user_message: str
-    bot_response: str
+    user_message: Optional[str] = None
+    bot_response: Optional[str] = None
     intent: Optional[str] = None
     confidence: Optional[float] = 0.0
-    response_time_ms: float
+    response_time_ms: float = 0.0
     is_escalated: bool = False
 
 
@@ -73,6 +73,7 @@ class ChatLogResponse(ChatLogBase):
     """Schema for returning log data to the Admin dashboard"""
 
     id: int
+    conversation_id: Optional[int] = None
     timestamp: datetime
 
     # This allows Pydantic to read data from SQLAlchemy models
@@ -89,3 +90,35 @@ class PerformanceReport(BaseModel):
 
 class CleanupResponse(BaseModel):
     message: str
+
+
+class AgentMessageRequest(BaseModel):
+    conversation_id: int
+    message: str
+
+
+class EndChatRequest(BaseModel):
+    conversation_id: int
+    user_id: str | None = None
+
+
+class ConversationResponse(BaseModel):
+    id: int
+    user_id: str
+    title: Optional[str] = None
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+    # 🆕 ADD THIS: To show which agent is assigned (optional)
+    assigned_agent_id: int | None = None
+
+    # This allows Pydantic to read data from your Database Models
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    role: str  # 'customer', 'agent', or 'admin'
+    name: Optional[str] = None
