@@ -187,7 +187,22 @@ rules:
       - intent: inform_order_id
       - action: action_check_order_status
 
-  - rule: Implementation of the Two-Stage-Fallback
+  # NEW: Connect the Sales Intent to the Action
+  - rule: Activate Sales Brain
+    steps:
+      - intent: ask_sales_advice
+      - action: action_sales_brain
+
+  # MODIFY: Change your existing Fallback rule to use the LLM
+  - rule: Ask Gemini when NLU is unsure
     steps:
       - intent: nlu_fallback
-      - action: action_smart_fallback
+      - action: action_llm_fallback
+
+  # =========================
+  # Payment Methods Inquiry
+  # =========================
+  - rule: Respond to payment method inquiries
+    steps:
+      - intent: ask_payment_methods
+      - action: action_search_faq

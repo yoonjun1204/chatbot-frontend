@@ -79,40 +79,28 @@ nlu:
       - I'm really annoyed right now
       - this service is terrible
       - you are wasting my time
+      - you stupid
+      - you suck
+      - nigger
+      - pussy
+      - bitch
+      - idiot
+      - shut up
 
   # =======================
   # product_info
   # =======================
   - intent: product_info
     examples: |
+      - show me your catalogue
+      - do you have a list of products?
+      - what kind of items do you have?
+      - are you a clothes store?
+      - what products do you sell?
       - tell me about your products
-      - what products do you sell
-      - show me your products
-      - what do you offer
-      - product information
-      - do you sell electronics
-      - what items are available
-      - can I see your catalogue
-      - what kind of products do you have
-      - show product list
-      - any products available
-      - what can I buy here
-      - what are your offerings
-      - what goods do you sell
-      - product details please
-      - tell me about your items
-      - list your products
-      - available products
-      - what services and products do you offer
-      - do you have accessories
-      - any new products
-      - product recommendations
-      - can you recommend something
-      - what items can I purchase
-      - ask about shirts
 
   # =======================
-  # returns
+  # returns (Updated with "Damaged" examples)
   # =======================
   - intent: returns
     examples: |
@@ -131,7 +119,6 @@ nlu:
       - return conditions
       - refund process
       - how to exchange product
-      - my item is damaged
       - wrong item received
       - return an order
       - refund my purchase
@@ -140,6 +127,13 @@ nlu:
       - do you accept returns
       - exchange my order
       - return request
+      - my item is damaged
+      - it arrived with a hole
+      - the shirt is ripped
+      - defective product
+      - there is a stain on the shirt
+      - item arrived broken
+      - quality is bad, I want to return
 
   # =======================
   # check_order_status
@@ -228,6 +222,8 @@ nlu:
       - check the faq about [warranty](search_term)
       - find documentation on [return policy](search_term)
       - help desk search for [delivery](search_term)
+      - search for return policy
+      - check faq for shipping
 
   # =======================
   # search_chat_history
@@ -286,3 +282,61 @@ nlu:
       - I want to explain my question differently
       - let me clarify my previous message
       - allow me to restate my question
+
+  # =======================
+  # ask_sales_advice (Updated with Negatives & General Items)
+  # =======================
+  - intent: ask_sales_advice
+    examples: |
+      - I need a shirt for a wedding
+      - what do you recommend for a job interview?
+      - I want something casual but stylish
+      - show me your summer collection
+      - do you have anything in blue for a party?
+      - I need a gift for my dad
+      - suggest a shirt under $50
+      - what fits best with jeans?
+      - do you have linen shirts?
+      - ask about shirts
+      - can you recommend something?
+      - I need advice on what to wear
+      - help me choose a shirt
+      - Do you sell sweaters?
+      - I need a hoodie
+      - Show me jackets
+      - Do you have anything for winter?
+      - I need gym clothes
+      - activewear
+      - looking for a pullover
+      - show me warm clothes
+      - do you have v-necks?
+      - I want a cardigan
+      - sweater weather
+      - something for the cold
+      - bomber jacket
+      - I need an outfit for hiking
+      - I hate floral prints
+      - I don't like orange
+      - no polyester please
+      - I dislike tight fits
+      - not that color
+      - I hate long sleeves
+      - Do you sell shoes?
+      - Do you have hats?
+      - Do you stock belts?
+      - Do you sell pants?
+
+  # =======================
+  # ask_payment_methods
+  # =======================
+  - intent: ask_payment_methods
+    examples: |
+      - what payment methods do you accept?
+      - do you take credit cards?
+      - can i pay with paypal?
+      - is cash on delivery available?
+      - how do i pay?
+      - do you accept bitcoin?
+      - payment options
+      - do you take visa?
+      - can i use apple pay?

@@ -2,3 +2,5 @@ rasa-sdk
 rapidfuzz
 psycopg2-binary
 sqlalchemy<2.0
+google-generativeai
+requests

@@ -122,6 +122,7 @@ def chat_endpoint(req: ChatRequest, db: Session = Depends(get_db)):
             sender_id=str(conv.id),
             actor_email=conv.user_id,  # This is the email (alicetan@...)
             db=db,
+            conversation_id=conv.id,
         )
         # Note: You need to ensure get_rasa_response uses actual_user_id_str
         # inside its save_chat_log call. See below.
@@ -146,6 +147,7 @@ def chat_endpoint(req: ChatRequest, db: Session = Depends(get_db)):
             conf=confidence,
             duration=duration_ms,
             escalated=False,
+            conversation_id=conv.id,
         )
 
     # 5. Store bot message & return

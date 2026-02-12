@@ -13,7 +13,7 @@ import {
   Loader2,
   CheckCircle2,
   User,
-  MousePointerClick // 🆕 Added icon to indicate clickability
+  MousePointerClick
 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
@@ -32,7 +32,6 @@ const roles: { key: UserRole; label: string; icon: any; color: string }[] = [
   { key: "admin", label: "Admin", icon: ShieldCheck, color: "slate" },
 ];
 
-// 🆕 Demo Data Structure for easy auto-filling
 const demoUsers = [
   { roleLabel: 'Customer', roleKey: 'customer' as UserRole, email: 'alicetan@example.com', color: 'text-blue-600' },
   { roleLabel: 'Support Agent', roleKey: 'agent' as UserRole, email: 'agent@example.com', color: 'text-indigo-600' },
@@ -41,7 +40,6 @@ const demoUsers = [
 
 const LoginPage: React.FC = () => {
   const { login } = useAuth();
-
   const [isRegistering, setIsRegistering] = useState(false);
 
   // Form States
@@ -54,10 +52,10 @@ const LoginPage: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // 🆕 Auto-fill Handler
+  // Auto-fill Handler
   const handleAutoFill = (demo: typeof demoUsers[0]) => {
     setEmail(demo.email);
-    setPassword("password123"); // Auto-fill the actual password
+    setPassword("password123");
     setSelectedRole(demo.roleKey);
     setError(null);
   };
@@ -286,6 +284,7 @@ const LoginPage: React.FC = () => {
               </div>
             )}
 
+            {/* Main Submit Button */}
             <button
               className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-xl shadow-slate-200 flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed group"
               type="submit"
@@ -300,21 +299,36 @@ const LoginPage: React.FC = () => {
                 </>
               )}
             </button>
+
+            {/* 🆕 SECONDARY ACTION: Cancel / Go Back (Only visible during registration) */}
+            {isRegistering && (
+              <button
+                type="button"
+                onClick={toggleMode}
+                className="w-full py-3 rounded-2xl font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors animate-in fade-in slide-in-from-top-1"
+              >
+                Cancel & Go Back
+              </button>
+            )}
+
           </form>
 
-          <div className="mt-8 text-center">
-            <p className="text-slate-500 text-sm">
-              {isRegistering ? "Already have an account?" : "Don't have an account?"}{" "}
-              <button
-                onClick={toggleMode}
-                className="text-blue-600 font-bold hover:underline outline-none"
-              >
-                {isRegistering ? "Sign In" : "Register now"}
-              </button>
-            </p>
-          </div>
+          {/* Bottom Link (Only show when NOT registering to avoid clutter) */}
+          {!isRegistering && (
+            <div className="mt-8 text-center">
+              <p className="text-slate-500 text-sm">
+                Don't have an account?{" "}
+                <button
+                  onClick={toggleMode}
+                  className="text-blue-600 font-bold hover:underline outline-none"
+                >
+                  Register now
+                </button>
+              </p>
+            </div>
+          )}
 
-          {/* 🆕 UPDATED DEMO ACCESS SECTION */}
+          {/* DEMO ACCESS SECTION (Only on Login) */}
           {!isRegistering && (
             <div className="mt-10 p-6 bg-slate-50 rounded-2xl border border-slate-200/60">
               <div className="flex items-center justify-between mb-4">
@@ -351,7 +365,6 @@ const LoginPage: React.FC = () => {
 
               <div className="mt-4 pt-3 border-t border-dashed border-slate-200 flex justify-between items-center">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Shared Password</span>
-                {/* 🟢 Masked Password */}
                 <code className="bg-slate-900 text-white px-2 py-0.5 rounded-md text-[11px] font-bold shadow-sm tracking-widest">
                   ••••••••
                 </code>

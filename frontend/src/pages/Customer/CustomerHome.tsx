@@ -17,6 +17,34 @@ import {
 const CustomerHome: React.FC = () => {
   const { user, logout } = useAuth();
 
+  // --- PRODUCT DATA WITH IMAGES ---
+  const featuredProducts = [
+    {
+      name: "Classic White Oxford",
+      price: "$45.00",
+      desc: "Pure cotton, non-iron finish. The ultimate daily staple.",
+      image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      name: "Casual Denim Shirt",
+      price: "$54.00",
+      desc: "Soft-washed indigo dye. Rugged yet refined.",
+      image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      name: "Midnight Slim Fit",
+      price: "$52.00",
+      desc: "Minimalist, modern tailoring in deep black.",
+      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      name: "Oxford Slim Fit Shirt",
+      price: "$49.99",
+      desc: "Tailored cut in crisp light blue. Modern silhouette.",
+      image: "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=800&q=80"
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
 
@@ -86,22 +114,30 @@ const CustomerHome: React.FC = () => {
           </div>
 
           <div className="relative">
-            {/* Visual Placeholder for Hero Image */}
-            <div className="aspect-[4/5] bg-slate-100 rounded-[2rem] overflow-hidden relative shadow-2xl rotate-2 hover:rotate-0 transition-transform duration-500">
-              <div className="absolute inset-0 bg-gradient-to-tr from-slate-200 to-transparent opacity-50" />
-              <div className="absolute bottom-8 left-8 right-8 bg-white/90 backdrop-blur p-6 rounded-2xl border border-white/20 shadow-lg">
-                <p className="text-xs font-bold text-blue-600 uppercase mb-1">New Arrival</p>
-                <h3 className="text-xl font-bold text-slate-900">Oxford Slim Fit Shirt</h3>
+            {/* Visual Hero Image */}
+            <div className="aspect-[4/5] bg-slate-100 rounded-[2rem] overflow-hidden relative shadow-2xl rotate-2 hover:rotate-0 transition-transform duration-500 group">
+              {/* REAL IMAGE ADDED HERE */}
+              <img
+                src="https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80"
+                alt="Man in shirt"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+
+              <div className="absolute bottom-8 left-8 right-8 bg-white/95 backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-lg">
+                <p className="text-xs font-bold text-blue-600 uppercase mb-1">Trending Now</p>
+                <h3 className="text-xl font-bold text-slate-900">Oxford Slim Fit Series</h3>
                 <div className="flex items-center justify-between mt-4">
                   <span className="text-2xl font-black text-slate-900">$49.90</span>
-                  <button className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors">
+                  <button className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200">
                     <ShoppingBag size={20} />
                   </button>
                 </div>
               </div>
             </div>
             {/* Decorative element */}
-            <div className="absolute -top-6 -right-6 w-32 h-32 bg-blue-50 rounded-full -z-10 blur-2xl" />
+            <div className="absolute -top-6 -right-6 w-32 h-32 bg-blue-100 rounded-full -z-10 blur-3xl opacity-60" />
+            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-indigo-100 rounded-full -z-10 blur-3xl opacity-60" />
           </div>
         </div>
       </section>
@@ -116,24 +152,32 @@ const CustomerHome: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { name: "Classic White Oxford", price: "$45.00", desc: "Pure cotton, non-iron finish." },
-              { name: "Casual Denim Shirt", price: "$59.00", desc: "Soft-washed indigo dye." },
-              { name: "Midnight Slim Fit", price: "$52.00", desc: "Minimalist, modern tailoring." }
-            ].map((product, i) => (
-              <div key={i} className="group bg-white rounded-3xl p-4 border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 cursor-pointer">
-                <div className="aspect-square bg-slate-100 rounded-2xl mb-6 overflow-hidden relative">
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {featuredProducts.map((product, i) => (
+              <div key={i} className="group bg-white rounded-3xl p-4 border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 cursor-pointer flex flex-col h-full">
+                <div className="aspect-[3/4] bg-slate-100 rounded-2xl mb-4 overflow-hidden relative">
+                  {/* PRODUCT IMAGE ADDED HERE */}
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  {/* Overlay on hover */}
+                  <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <button className="absolute bottom-4 right-4 bg-white text-slate-900 p-2.5 rounded-full shadow-lg translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:bg-blue-600 hover:text-white">
+                    <ShoppingBag size={18} />
+                  </button>
                 </div>
-                <div className="px-2">
+
+                <div className="px-2 flex flex-col flex-grow">
                   <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">{product.name}</h3>
-                  <p className="text-sm text-slate-500 mb-4">{product.desc}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl font-bold text-slate-900">{product.price}</span>
-                    <button className="text-blue-600 font-bold text-sm flex items-center gap-1 hover:underline">
-                      View Details
-                    </button>
+                  <p className="text-sm text-slate-500 mb-4 line-clamp-2">{product.desc}</p>
+
+                  <div className="mt-auto flex items-center justify-between border-t border-slate-50 pt-4">
+                    <span className="text-lg font-black text-slate-900">{product.price}</span>
+                    <span className="text-xs font-bold text-blue-600 uppercase tracking-wide group-hover:underline">
+                      View
+                    </span>
                   </div>
                 </div>
               </div>
@@ -169,12 +213,12 @@ const CustomerHome: React.FC = () => {
                 bg: "bg-indigo-50"
               }
             ].map((feature, i) => (
-              <div key={i} className="flex flex-col items-center text-center">
-                <div className={`${feature.bg} ${feature.color} p-4 rounded-2xl mb-6`}>
-                  <feature.icon size={28} />
+              <div key={i} className="flex flex-col items-center text-center group hover:-translate-y-2 transition-transform duration-300">
+                <div className={`${feature.bg} ${feature.color} p-5 rounded-2xl mb-6 shadow-sm group-hover:shadow-md transition-shadow`}>
+                  <feature.icon size={32} strokeWidth={1.5} />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
-                <p className="text-slate-500 leading-relaxed text-sm">
+                <p className="text-slate-500 leading-relaxed text-sm max-w-xs">
                   {feature.desc}
                 </p>
               </div>

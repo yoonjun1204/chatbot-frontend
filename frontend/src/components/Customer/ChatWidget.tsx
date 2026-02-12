@@ -344,7 +344,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ userIdentifier }) => {
                   <div className={`relative max-w-[80%] px-4 py-2 rounded-2xl shadow-sm text-sm ${m.sender === "user" ? "bg-blue-600 text-white rounded-br-none" : (m.sender === "agent" ? "bg-green-50 text-green-900 border border-green-200 rounded-bl-none" : "bg-gray-100 text-gray-800 rounded-bl-none border border-gray-200")}`}>
                     {editingMessageId === m.id ? (
                       <div className="flex flex-col gap-2">
-                        <textarea className="bg-white text-gray-800 p-2 rounded-lg outline-none border-none text-sm w-full min-w-[200px]" value={editText} onChange={(e) => setEditText(e.target.value)} autoFocus />
+                        <textarea className="bg-white text-gray-800 p-2 rounded-lg outline-none border-none text-sm w-full min-w-[200px]" value={editText} onChange={(e) => setEditText(e.target.value)} />
                         <div className="flex justify-end gap-2">
                           <button onClick={() => setEditingMessageId(null)} className="text-[10px] uppercase font-bold opacity-70">Cancel</button>
                           <button onClick={() => handleEditSubmit(m.id)} className="text-[10px] uppercase font-bold">Save & Submit</button>

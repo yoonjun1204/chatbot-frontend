@@ -44,7 +44,13 @@ def parse_message(message: str):
         return None, {}, 0.0
 
 
-def get_rasa_response(message: str, sender_id: str, actor_email: str, db: Session):
+def get_rasa_response(
+    message: str,
+    sender_id: str,
+    actor_email: str,
+    db: Session,
+    conversation_id: int = None,
+):
     """
     Sends message to Rasa, measures performance, and logs to DB.
     """
@@ -58,7 +64,7 @@ def get_rasa_response(message: str, sender_id: str, actor_email: str, db: Sessio
 
     try:
         # 3. Call Rasa Webhook for the actual bot response
-        r = requests.post(RASA_WEBHOOK_URL, json=payload, timeout=30)
+        r = requests.post(RASA_WEBHOOK_URL, json=payload, timeout=50)
         r.raise_for_status()
         rasa_output = r.json()
 
@@ -91,6 +97,7 @@ def get_rasa_response(message: str, sender_id: str, actor_email: str, db: Sessio
             conf=confidence,
             duration=duration_ms,
             escalated=(confidence < 0.6 or intent_name == "out_of_scope"),
+            conversation_id=conversation_id,
         )
 
         return rasa_output
@@ -124,11 +131,13 @@ def save_chat_log(
     duration: float,
     escalated: bool,
     user_message_id=None,
+    conversation_id: int = None,
 ):
     """
     Unified helper to save performance metrics to the ChatLog table.
     """
     new_log = ChatLog(
+        conversation_id=conversation_id,
         actor_id=actor_id,
         actor_email=actor_email,
         user_message=msg,

@@ -1,29 +1,84 @@
+# backend/nlp.py
 from typing import Dict, Any, List, Tuple, Optional
 from sqlalchemy.orm import Session
-
-from models import Order, User
 
 
 def get_quick_replies(intent: str) -> List[str]:
     """
-    Suggestions to show in the UI depending on last intent.
-    (keep for button)
+    Smart suggestions to show in the UI based on the user's last intent.
+    Matches the intents defined in your domain.yml.
     """
-    if intent == "greet":
-        return ["Ask about shirts", "Check order status", "Return / exchange policy"]
+
+    # --- 1. THE SALES BRAIN (Crucial for driving sales) ---
+    # If they just asked for advice, give them specific follow-up options.
+    if intent == "ask_sales_advice":
+        return [
+            "Show me cheaper options",
+            "Do you have this in Blue?",
+            "Is it 100% Cotton?",
+            "Show me something formal",
+        ]
+
+    # --- 2. PRODUCT BROWSING ---
     if intent == "product_info":
-        return ["What sizes are available?", "Do you have black shirts?", "What is the material?"]
-    if intent == "order_status":
-        return ["My order status", "I want to update my address"]
+        return [
+            "Best sellers",
+            "New Arrivals",
+            "Size Guide",
+            "Fabric care instructions",
+        ]
+
+    # --- 3. ORDER TRACKING ---
+    # Note: I matched this to 'check_order_status' from your domain.yml
+    if intent == "check_order_status" or intent == "inform_order_id":
+        return [
+            "Check another order",
+            "Where is my package?",
+            "Report missing item",
+            "Return this item",
+        ]
+
+    # --- 4. RETURNS & POLICIES ---
     if intent == "returns":
-        return ["How do I return a shirt?", "What is your refund policy?"]
-    return ["Ask about shirts", "Check order status", "Return / exchange policy"]
+        return [
+            "Start a return",
+            "Exchange for different size",
+            "What is the return window?",
+            "Talk to support",
+        ]
+
+    # --- 5. SUPPORT & HANDOVER ---
+    if intent == "human_handover" or intent == "submit_support_request":
+        return ["Check ticket status", "Back to shopping", "Restart chat"]
+
+    # --- 6. FAQ & HISTORY SEARCH ---
+    if intent == "search_faq":
+        return ["Shipping costs", "International delivery", "Washing instructions"]
+
+    if intent == "search_chat_history":
+        return ["Search for 'Price'", "Search for 'Return'", "Clear history"]
+
+    # --- 7. ERROR HANDLING (Smart Recovery) ---
+    # If the bot didn't understand (Fallback), give them the 'Main Menu' options
+    if intent == "nlu_fallback" or intent == "action_llm_fallback":
+        return ["Recommend a shirt", "Check Order Status", "Return Policy", "Help"]
+
+    if intent == "abusive":
+        return ["Restart Conversation", "Contact Human Agent"]
+
+    # --- DEFAULT / GREET (The Main Menu) ---
+    return [
+        "I need a shirt for a wedding",  # Prompt the Sales Brain immediately
+        "Check order status",
+        "Return policy",
+        "Browse Casual Shirts",
+    ]
 
 
 def handle_intent(
-        intent: str,
-        entities: Dict[str, Any],
-        db: Session,
+    intent: str,
+    entities: Dict[str, Any],
+    db: Session,
 ) -> Tuple[Optional[str], Dict[str, Any]]:
     """
     Modified: Logic removed to let Rasa Core & Action Server handle the conversation.
@@ -34,55 +89,4 @@ def handle_intent(
     # This section retains the payload processing, the fronted may still need to use user_identifier
     user_identifier: Optional[str] = entities.get("user_identifier")
 
-    # ---------------------------------------------------------
-    # All comment out
-    # No need hard code any more, let Rasa decied
-    # ---------------------------------------------------------
-
-    # if intent == "greet":
-    #     text = (
-    #         "Hi! 👋 I'm your shirt support assistant. I can help with product info, "
-    #         "order status (for signed-in customers), and returns. What would you like to do?"
-    #     )
-    #     return text, payload
-
-    # if intent == "abusive":
-    #     text = (
-    #         "I'm here to help. Let's keep the conversation respectful. "
-    #         "How can I assist you with your order or shirts?"
-    #     )
-    #     return text, payload
-
-    # if intent == "goodbye":
-    #     text = "Thanks for chatting with us! If you need anything else, just open the chat again. 😊"
-    #     return text, payload
-
-    # # --- Business intents below ---
-
-    # if intent == "product_info":
-    #     text = (
-    #         "We sell men's and women's shirts in sizes XS–XXL. "
-    #         "Most shirts are 100% cotton or cotton blends. "
-    #         "What would you like to know: size, colour, or material?"
-    #     )
-    #     return text, payload
-
-    # if intent == "returns":
-    #     text = (
-    #         "Our return policy: you can return or exchange shirts within 30 days "
-    #         "of delivery, as long as tags are intact and the shirt is unworn. "
-    #         "Would you like steps for starting a return?"
-    #     )
-    #     return text, payload
-
-    # # 🔐 Order status: login required
-    # if intent == "order_status":
-    #     # ... (Originally a very long DB query logic omitted) ...
-    #     # Originally, this would intercept ORD-67890 and return "not found"
-    #     pass 
-
-    # ---------------------------------------------------------
-    # Return None
-    # Tell main.py: I have no processing logic here, please use the answer returned by Rasa.
-    # ---------------------------------------------------------
     return None, payload

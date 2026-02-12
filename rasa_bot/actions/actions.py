@@ -1,12 +1,15 @@
 import re
 import json
 import os
+import requests
 from typing import Any, Text, Dict, List, Optional
 
 from rasa_sdk import Action, Tracker, FormValidationAction
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet, Restarted, UserUtteranceReverted, FollowupAction
 from rasa_sdk.types import DomainDict
+import os
+import google.generativeai as genai
 
 # Third-party library for fuzzy string matching
 from rapidfuzz import process, fuzz
@@ -38,20 +41,6 @@ class DatabaseService:
                 print("INFO: Database connection configured successfully.")
             except Exception as e:
                 print(f"ERROR: Failed to configure database engine: {e}")
-
-        # --- MOCKED DATA (Only for Support & History) ---
-        self.chat_history = [
-            {
-                "sender": "user",
-                "message": "I want to return an item",
-                "time": "2025-12-01",
-            },
-            {
-                "sender": "bot",
-                "message": "You can return items within 30 days.",
-                "time": "2025-12-01",
-            },
-        ]
 
     def get_order_status(self, order_id: Text) -> Optional[Dict[Text, Any]]:
         """
@@ -101,16 +90,44 @@ class DatabaseService:
         # Placeholder ID
         return "TICKET-NEW"
 
-    def search_chat_history(self, keyword: Text) -> List[Dict[str, str]]:
+    def search_products(self, keyword: Text = None) -> List[Dict[Text, Any]]:
         """
-        STUB: Search chat history messages by keyword.
+        Real SQL query to find products in Neon DB.
         """
-        keyword_lower = keyword.lower()
-        return [
-            entry
-            for entry in self.chat_history
-            if keyword_lower in entry["message"].lower()
-        ]
+        if not self.engine:
+            return []
+
+        try:
+            with self.engine.connect() as connection:
+                # If keyword is provided, search name/desc. If not, get everything.
+                if keyword:
+                    # ILIKE is case-insensitive search in PostgreSQL
+                    query = text(
+                        """
+                        SELECT name, price, description, color 
+                        FROM products 
+                        WHERE stock_quantity > 0 
+                        AND (name ILIKE :kw OR description ILIKE :kw OR color ILIKE :kw)
+                        LIMIT 5
+                    """
+                    )
+                    result = (
+                        connection.execute(query, {"kw": f"%{keyword}%"})
+                        .mappings()
+                        .all()
+                    )
+                else:
+                    query = text(
+                        "SELECT name, price, description, color FROM products WHERE stock_quantity > 0 LIMIT 5"
+                    )
+                    result = connection.execute(query).mappings().all()
+
+                # Convert to simple list of dicts
+                return [dict(row) for row in result]
+
+        except Exception as e:
+            print(f"DB Product Search failed: {e}")
+            return []
 
 
 # Global service instance
@@ -300,52 +317,70 @@ class ActionSearchFaq(Action):
     def name(self) -> Text:
         return "action_search_faq"
 
-    def run(
-        self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: DomainDict
-    ) -> List[Dict[Text, Any]]:
-
+    def run(self, dispatcher, tracker, domain):
         query = tracker.get_slot("search_term")
+        # If no slot, try the last message text
         if not query:
-            dispatcher.utter_message(text="Please provide a keyword to search the FAQ.")
-            return []
+            query = tracker.latest_message.get("text")
 
-        # Load knowledge base
+        # Load KB
         kb_path = os.path.join(os.path.dirname(__file__), "knowledge_base.json")
-        knowledge_base = []
-
-        if os.path.exists(kb_path):
-            try:
-                with open(kb_path, "r", encoding="utf-8") as f:
-                    knowledge_base = json.load(f)
-            except Exception:
-                knowledge_base = []
-
-        # Fallback KB if file missing
-        if not knowledge_base:
+        try:
+            with open(kb_path, "r", encoding="utf-8") as f:
+                knowledge_base = json.load(f)
+        except:
+            # Emergency Fallback
             knowledge_base = [
-                {
-                    "question": "What is your return policy?",
-                    "answer": "You can return items within 30 days in original condition.",
-                },
-                {
-                    "question": "How do I track my order?",
-                    "answer": "Tracking information will be sent once your order is shipped.",
-                },
+                {"question": "Returns", "answer": "30 days return policy."}
             ]
 
+        # 1. FUZZY MATCHING
+        # We extract the best match from the list of questions
         questions = [item["question"] for item in knowledge_base]
-
-        best_answer = None
         match = process.extractOne(query, questions, scorer=fuzz.token_set_ratio)
-        if match and match[1] >= 50:
-            best_answer = knowledge_base[match[2]]["answer"]
 
-        if best_answer:
-            dispatcher.utter_message(text=best_answer)
-        else:
-            dispatcher.utter_message(
-                text="I couldn't find a relevant answer in the FAQ."
-            )
+        # match is a tuple: (matched_string, score, index)
+        # e.g., ("How do I return?", 85, 0)
+
+        if match:
+            score = match[1]
+            best_entry = knowledge_base[match[2]]
+
+            # SCENARIO A: Perfect Match (Score > 80)
+            # Just give the pre-written answer. It's fast and accurate.
+            if score > 80:
+                dispatcher.utter_message(text=f"FAQ: {best_entry['answer']}")
+                return [SlotSet("search_term", None)]
+
+            # SCENARIO B: Okay Match (Score > 50)
+            # Use LLM to make it sound natural contextually
+            elif score > 50:
+                system_prompt = f"""
+                You are a helpful support agent.
+                The user asked: "{query}"
+                We found this relevant policy in our FAQ: "{best_entry['answer']}"
+                
+                INSTRUCTION: Rephrase the policy to directly answer the user's specific question naturally. Keep it short.
+                """
+                response = get_llm_response(system_prompt, query)
+                dispatcher.utter_message(text=response)
+                return [SlotSet("search_term", None)]
+
+        # SCENARIO C: No Match (Score < 50)
+        # The user asked something not in our FAQ file.
+        # Let's ask the LLM to try and answer based on "General Retail Knowledge" or apologize.
+
+        system_prompt = f"""
+        You are a helpful support agent for a shirt store.
+        The user asked: "{query}"
+        We could not find a specific policy in our FAQ database.
+        
+        INSTRUCTION: 
+        1. If this is a general question (e.g. "What is cotton?"), answer it briefly.
+        2. If it requires specific store policy (e.g. "What is your CEO's phone number?"), apologize and say you don't have that info.
+        """
+        response = get_llm_response(system_prompt, query)
+        dispatcher.utter_message(text=response)
 
         return [SlotSet("search_term", None)]
 
@@ -420,4 +455,198 @@ class ActionSmartFallback(Action):
 
         # No ID? Fallback as usual.
         dispatcher.utter_message(response="utter_default_feedback")
+        return [UserUtteranceReverted()]
+
+
+# =========================================================
+# HYBRID INTELLIGENCE LAYER (LLM + Logic)
+# =========================================================
+def get_llm_response(system_prompt, user_message):
+    """
+    Direct API call to Google Gemini (Stable Flash Version)
+    """
+    try:
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            return "DEBUG ERROR: API Key is missing."
+
+        # USE THE STABLE ALIAS (This fixes the Limit: 0 error)
+        model_name = "gemini-flash-latest"
+
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+
+        headers = {"Content-Type": "application/json"}
+        payload = {
+            "contents": [
+                {"parts": [{"text": f"SYSTEM: {system_prompt}\nUSER: {user_message}"}]}
+            ]
+        }
+
+        response = requests.post(url, headers=headers, json=payload)
+
+        if response.status_code == 200:
+            return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+        elif response.status_code == 429:
+            return "Note: The AI is busy (Rate Limit Reached). Please try again in 30 seconds."
+        else:
+            return f"GOOGLE ERROR: {response.status_code} - {response.text}"
+
+    except Exception as e:
+        return f"SYSTEM ERROR: {str(e)}"
+
+
+class ActionSalesBrain(Action):
+    def name(self) -> Text:
+        return "action_sales_brain"
+
+    def run(self, dispatcher, tracker, domain):
+        user_msg = tracker.latest_message.get("text")
+
+        # --- 1. GET HISTORY (Context) ---
+        # Grab recent conversation so the LLM knows if you rejected a previous item
+        events = tracker.events_after_latest_restart()
+        chat_history = ""
+        for e in events:
+            if e["event"] == "user":
+                chat_history += f"User: {e.get('text')}\n"
+            elif e["event"] == "bot":
+                chat_history += f"Bot: {e.get('text')}\n"
+
+        # Keep only the last ~500 characters to save tokens
+        chat_history = chat_history[-500:]
+
+        # --- 2. SEARCH DATABASE (Smart Keyword Logic) ---
+        # A. Try searching the full sentence first
+        products = db_service.search_products(keyword=user_msg)
+
+        # B. If no results, split sentence into keywords and search individually
+        # This fixes the "I need something for the gym" issue
+        if not products:
+            ignore_words = [
+                "need",
+                "want",
+                "have",
+                "show",
+                "looking",
+                "something",
+                "shirt",
+                "wear",
+                "with",
+                "for",
+                "the",
+                "can",
+                "you",
+                "please",
+            ]
+            # Find meaningful words longer than 3 chars
+            keywords = [
+                w
+                for w in user_msg.split()
+                if len(w) > 3 and w.lower() not in ignore_words
+            ]
+
+            for word in keywords:
+                found = db_service.search_products(keyword=word)
+                if found:
+                    products.extend(found)
+
+            # Remove duplicates (in case 'winter' and 'jacket' find the same item)
+            # We use a dictionary keyed by product name to filter duplicates
+            products = list({p["name"]: p for p in products}.values())
+
+        # C. Fallback: If STILL nothing, fetch generic best-sellers
+        if not products:
+            products = db_service.search_products(keyword=None)
+
+        # Format for LLM
+        inventory_context = ""
+        if products:
+            for p in products:
+                inventory_context += (
+                    f"- {p['name']} (${p['price']}): {p['color']}, {p['description']}\n"
+                )
+        else:
+            inventory_context = "No stock currently available."
+
+        # --- 3. PROMPT ENGINEERING ---
+        system_prompt = f"""
+        You are 'Stitch', a helpful fashion assistant.
+        
+        REAL-TIME INVENTORY:
+        {inventory_context}
+        
+        CONVERSATION HISTORY (Use this for context, e.g., if user says 'I hate that'):
+        {chat_history}
+        
+        INSTRUCTIONS:
+        1. Recommend a product from the Inventory based on the User's LAST message and the Context.
+        2. If the user rejected a previous suggestion, find a different alternative from the Inventory.
+        3. Do NOT repeat greetings ("Hi there") if they are already in the history.
+        4. Keep it conversational and under 3 sentences.
+        """
+
+        # 4. CALL LLM
+        bot_reply = get_llm_response(system_prompt, user_msg)
+
+        dispatcher.utter_message(text=bot_reply)
+        return []
+
+
+class ActionLLMFallback(Action):
+    def name(self) -> Text:
+        return "action_llm_fallback"
+
+    def run(self, dispatcher, tracker, domain):
+        user_msg = tracker.latest_message.get("text")
+
+        # --- LAYER 1: CHECK FAQ JSON FIRST (The "Hard" Facts) ---
+        kb_path = os.path.join(os.path.dirname(__file__), "knowledge_base.json")
+        try:
+            with open(kb_path, "r", encoding="utf-8") as f:
+                knowledge_base = json.load(f)
+
+            # Fuzzy match the user's message against FAQ questions
+            questions = [item["question"] for item in knowledge_base]
+            match = process.extractOne(user_msg, questions, scorer=fuzz.token_set_ratio)
+
+            # If match score is high (> 75), it's definitely a policy question
+            if match and match[1] >= 75:
+                best_entry = knowledge_base[match[2]]
+                # Optional: Use Gemini to rephrase it nicely so it doesn't sound robotic
+                prompt = f"User asked: '{user_msg}'. Our policy is: '{best_entry['answer']}'. Answer the user naturally."
+                response = get_llm_response(prompt, user_msg)
+                dispatcher.utter_message(text=response)
+                return [UserUtteranceReverted()]
+        except Exception as e:
+            print(f"FAQ Check failed: {e}")
+
+        # --- LAYER 2: IF NO FAQ FOUND, ASK GEMINI (General Intelligence) ---
+        # Get Context
+        events = tracker.events_after_latest_restart()
+        chat_history = ""
+        for e in events:
+            if e["event"] == "user":
+                chat_history += f"User: {e.get('text')}\n"
+            elif e["event"] == "bot":
+                chat_history += f"Bot: {e.get('text')}\n"
+        chat_history = chat_history[-500:]
+
+        system_prompt = f"""
+        You are 'Stitch', a helpful AI for Shirtify.
+        
+        CONTEXT:
+        The user said something we didn't have a specific rule for.
+        
+        CHAT HISTORY:
+        {chat_history}
+        
+        INSTRUCTIONS:
+        1. If it's small talk ("Hi", "Thanks"), be polite.
+        2. If it's a complex question about shirts/fashion, answer as best as you can.
+        3. If you don't know, apologize and suggest asking about "Products", "Orders", or "Returns".
+        """
+
+        bot_reply = get_llm_response(system_prompt, user_msg)
+        dispatcher.utter_message(text=bot_reply)
+
         return [UserUtteranceReverted()]

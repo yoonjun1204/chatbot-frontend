@@ -29,7 +29,8 @@ pipeline:
 
   - name: EntitySynonymMapper
   - name: FallbackClassifier
-    threshold: 0.4
+    threshold: 0.75
+    ambiguity_threshold: 0.1
 
 policies:
   - name: MemoizationPolicy
@@ -46,5 +47,5 @@ policies:
 
   - name: RulePolicy
     core_fallback_threshold: 0.3
-    core_fallback_action_name: "action_smart_fallback"
+    core_fallback_action_name: "action_llm_fallback"
     enable_fallback_prediction: True
