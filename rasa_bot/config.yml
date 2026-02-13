@@ -7,7 +7,7 @@ language: en
 
 pipeline:
   - name: WhitespaceTokenizer
-  - name: RegexFeaturizer # Keep this! It helps DIET see the pattern.
+  - name: RegexFeaturizer
   - name: RegexEntityExtractor
     use_lookup_tables: True
     use_regexes: True
@@ -17,15 +17,14 @@ pipeline:
   - name: CountVectorsFeaturizer
   - name: CountVectorsFeaturizer
     analyzer: char_wb
-    min_ngram: 3
-    max_ngram: 5
+    min_ngram: 1
+    max_ngram: 4
 
   - name: DIETClassifier
     epochs: 100
     constrain_similarities: true
-    entity_recognition: false # DIET handles all extraction
-    excluded_entities:
-      - order_id
+    entity_recognition: true # <--- MUST BE TRUE so it can find 'search_term'
+    # Removed invalid 'excluded_entities' line
 
   - name: EntitySynonymMapper
   - name: FallbackClassifier

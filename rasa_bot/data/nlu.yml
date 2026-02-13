@@ -1,4 +1,3 @@
-# rasa_bot/data/nlu.yml
 version: "3.1"
 
 nlu:
@@ -27,18 +26,6 @@ nlu:
       - good evening
       - greetings
       - good day
-
-  # =======================
-  # reset chat
-  # =======================
-  - intent: reset_chat
-    examples: |
-      - reset the conversation
-      - clear this conversation
-      - start the chat over
-      - restart the session
-      - wipe this chat history
-      - I want to continue but reset
 
   # =======================
   # goodbye
@@ -100,7 +87,7 @@ nlu:
       - tell me about your products
 
   # =======================
-  # returns (Updated with "Damaged" examples)
+  # returns (Kept for FAQ/Search functionality)
   # =======================
   - intent: returns
     examples: |
@@ -217,23 +204,27 @@ nlu:
   # =======================
   - intent: search_faq
     examples: |
+      - I have a question
+      - search the faq
+      - I need to check a policy
+      - do you have an FAQ?
+      - help me with a rule
+      - look up a policy
+      - open the help center
       - search the faq for [refund](search_term)
       - look up [shipping](search_term) in the help center
       - check the faq about [warranty](search_term)
       - find documentation on [return policy](search_term)
       - help desk search for [delivery](search_term)
-      - search for return policy
-      - check faq for shipping
-
-  # =======================
-  # search_chat_history
-  # =======================
-  - intent: search_chat_history
-    examples: |
-      - search chat history
-      - find past messages about [refund](search_term)
-      - search old chats for [order status](search_term)
-      - look up previous messages on [shipping](search_term)
+      - do you offer [student discounts](search_term)?
+      - what is your [return policy](search_term)?
+      - tell me about [international shipping](search_term)
+      - how do I [wash linen](search_term)?
+      - [size guide](search_term) please
+      - can I [cancel my order](search_term)?
+      - are your shirts [100% cotton](search_term)?
+      - do you have [physical stores](search_term)?
+      - using a [gift card](search_term)
 
   # =======================
   # human_handover
@@ -284,7 +275,7 @@ nlu:
       - allow me to restate my question
 
   # =======================
-  # ask_sales_advice (Updated with Negatives & General Items)
+  # ask_sales_advice
   # =======================
   - intent: ask_sales_advice
     examples: |
@@ -340,3 +331,16 @@ nlu:
       - payment options
       - do you take visa?
       - can i use apple pay?
+
+  # =======================
+  # Inform FAQ Query (Used by Form to capture topic)
+  # =======================
+  - intent: inform_faq_query
+    examples: |
+      - [shipping](search_term)
+      - about [returns](search_term)
+      - [warranty](search_term)
+      - [prices](search_term)
+      - check [delivery](search_term)
+      - regarding [sizing](search_term)
+      - I want to know about [washing](search_term)

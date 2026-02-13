@@ -5,7 +5,6 @@ rules:
   # =========================
   # Global / deterministic rules
   # =========================
-
   - rule: Greeting
     steps:
       - intent: greet
@@ -26,16 +25,9 @@ rules:
       - intent: abusive
       - action: utter_abusive_warning
 
-  - rule: Start a new chat (restart)
-    steps:
-      - intent: start_new_chat
-      - action: utter_restart_ack
-      - action: action_restart
-
   # =========================
   # Order status form
   # =========================
-
   - rule: Activate order status form
     steps:
       - intent: check_order_status
@@ -51,6 +43,18 @@ rules:
       - slot_was_set:
           - requested_slot: null
       - action: action_check_order_status
+
+  # --- NEW: Interruption Rule ---
+  # Allows user to ask FAQ/Sales questions while stuck in the order form
+  - rule: Interruption during Order Form
+    condition:
+      - active_loop: order_status_form
+    steps:
+      - intent: search_faq # Works for search_faq, ask_sales_advice, etc (if they share the rule structure)
+      - action: action_deactivate_loop
+      - active_loop: null
+      - action: faq_search_form
+      - active_loop: faq_search_form
 
   # =========================
   # FAQ search form
@@ -80,33 +84,6 @@ rules:
       - active_loop: faq_search_form
 
   # =========================
-  # History search form
-  # =========================
-  - rule: Activate history search form
-    steps:
-      - intent: search_chat_history
-      - action: history_search_form
-      - active_loop: history_search_form
-
-  - rule: Submit history search form
-    condition:
-      - active_loop: history_search_form
-    steps:
-      - action: history_search_form
-      - active_loop: null
-      - slot_was_set:
-          - requested_slot: null
-      - action: action_search_chat_history
-
-  - rule: Allow history keyword during form
-    condition:
-      - active_loop: history_search_form
-    steps:
-      - intent: inform_history_query
-      - action: history_search_form
-      - active_loop: history_search_form
-
-  # =========================
   # Form Corrections
   # =========================
   - rule: Allow order id correction during form
@@ -133,14 +110,6 @@ rules:
       - intent: product_info
       - action: utter_product_info
 
-  - rule: Respond to returns policy
-    steps:
-      - intent: returns
-      - action: utter_returns_policy
-
-  # =========================
-  # Human handover
-  # =========================
   - rule: Escalate to human agent
     steps:
       - intent: human_handover
@@ -148,27 +117,11 @@ rules:
       - action: action_create_support_request
       - action: action_handover
 
-  # =========================
-  # UX helper intents
-  # =========================
   - rule: Rephrase prompt
     steps:
       - intent: rephrase
       - action: utter_rephrase_prompt
 
-  - rule: Delete chat messages help
-    steps:
-      - intent: delete_chat_messages
-      - action: utter_delete_chat_messages_help
-
-  - rule: Edit last message help
-    steps:
-      - intent: edit_last_message
-      - action: utter_edit_last_message_help
-
-  # =========================
-  # Explicit support request
-  # =========================
   - rule: Submit support request explicitly
     steps:
       - intent: submit_support_request
@@ -176,33 +129,22 @@ rules:
       - action: action_create_support_request
       - action: utter_ticket_created
 
-  # =========================
-  # Fallback & ID Handling
-  # =========================
-  - rule: Process order ID (Confident)
-    condition:
-      - slot_was_set:
-          - order_id: true
-    steps:
-      - intent: inform_order_id
-      - action: action_check_order_status
-
-  # NEW: Connect the Sales Intent to the Action
   - rule: Activate Sales Brain
     steps:
       - intent: ask_sales_advice
       - action: action_sales_brain
 
-  # MODIFY: Change your existing Fallback rule to use the LLM
   - rule: Ask Gemini when NLU is unsure
     steps:
       - intent: nlu_fallback
       - action: action_llm_fallback
 
-  # =========================
-  # Payment Methods Inquiry
-  # =========================
   - rule: Respond to payment method inquiries
     steps:
       - intent: ask_payment_methods
+      - action: action_search_faq
+
+  - rule: Respond to returns policy
+    steps:
+      - intent: returns
       - action: action_search_faq

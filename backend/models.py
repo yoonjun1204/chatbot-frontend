@@ -27,7 +27,7 @@ class Conversation(Base):
     __tablename__ = "conversations"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     title = Column(String, default="New Chat")
     # Values: "active_bot", "waiting_for_agent", "active_agent"
     status = Column(String, default="active_bot")
@@ -40,6 +40,8 @@ class Conversation(Base):
     messages = relationship(
         "Message", back_populates="conversation", cascade="all, delete-orphan"
     )
+    user = relationship("User", foreign_keys=[user_id])
+    agent = relationship("User", foreign_keys=[assigned_agent_id])
 
 
 class Message(Base):
@@ -95,6 +97,9 @@ class Order(Base):
     status = Column(String, default="Processing")
     estimated_delivery = Column(Date, nullable=True)
     customer_name = Column(String, nullable=True)
+    product_name = Column(String, nullable=False)
+    quantity = Column(Integer, default=1)
+    total_price = Column(Float, nullable=False)
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     user = relationship("User", back_populates="orders")

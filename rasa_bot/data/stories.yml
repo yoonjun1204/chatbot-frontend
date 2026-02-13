@@ -1,4 +1,3 @@
-# rasa_bot/data/stories.yml
 version: "3.1"
 
 stories:
@@ -12,8 +11,12 @@ stories:
       - intent: check_order_status
       - action: order_status_form
       - active_loop: order_status_form
+      - slot_was_set:
+          - requested_slot: order_id
       - intent: inform_order_id
         entities:
+          - order_id: "ORD-12345"
+      - slot_was_set:
           - order_id: "ORD-12345"
       - action: order_status_form
       - active_loop: null
@@ -24,16 +27,18 @@ stories:
       - action: utter_goodbye
 
   # ========================================================
-  # Happy Path: FAQ Search
+  # Happy Path: FAQ Search (Form Interaction)
   # ========================================================
-  - story: Happy path - Search FAQ
+  - story: Happy path - Search FAQ with form asking
     steps:
       - intent: search_faq
       - action: faq_search_form
       - active_loop: faq_search_form
       - intent: inform_faq_query
         entities:
-          - search_term: "return policy"
+          - search_term: "washing instructions"
+      - slot_was_set:
+          - search_term: "washing instructions"
       - action: faq_search_form
       - active_loop: null
       - slot_was_set:
@@ -41,59 +46,60 @@ stories:
       - action: action_search_faq
 
   # ========================================================
-  # Context Switching: Order -> FAQ
+  # Happy Path: FAQ Search (Skip Logic)
   # ========================================================
-  - story: Context Switch - Check order then search FAQ
+  - story: Happy path - Search FAQ with immediate entity
     steps:
-      # --- Part 1: Order Status ---
-      - intent: check_order_status
-      - action: order_status_form
-      - active_loop: order_status_form
-      - action: order_status_form
-      - active_loop: null
-      - action: action_check_order_status
-
-      # --- Part 2: Switch to FAQ ---
       - intent: search_faq
+        entities:
+          - search_term: "return policy"
+      - slot_was_set:
+          - search_term: "return policy"
       - action: faq_search_form
       - active_loop: faq_search_form
       - action: faq_search_form
       - active_loop: null
+      - slot_was_set:
+          - requested_slot: null
       - action: action_search_faq
 
   # ========================================================
-  # Context Switching: FAQ -> History -> Human
+  # Happy Path: Sales Brain
   # ========================================================
-  - story: Multi-task flow - FAQ to History to Human
+  - story: Sales Advice Conversation
     steps:
-      # 1. Search FAQ
+      - intent: ask_sales_advice
+      - action: action_sales_brain
+      - intent: ask_sales_advice
+      - action: action_sales_brain
+
+  # ========================================================
+  # Context Switching: Order -> FAQ -> Human
+  # ========================================================
+  - story: Multi-task flow - Order to FAQ to Human
+    steps:
+      # 1. Start Order Form
+      - intent: check_order_status
+      - action: order_status_form
+      - active_loop: order_status_form
+
+      # 2. User switches to FAQ
+      # --- FIX: Match the "Interruption Rule" exactly ---
       - intent: search_faq
+      - action: action_deactivate_loop # <--- Added this to match Rule
+      - active_loop: null # <--- Added this to match Rule
+      - action: faq_search_form
+      - active_loop: faq_search_form
+
+      - intent: inform_faq_query
+        entities:
+          - search_term: "cancel order"
       - action: faq_search_form
       - active_loop: null
       - action: action_search_faq
 
-      # 2. Search History
-      - intent: search_chat_history
-      - action: history_search_form
-      - active_loop: null
-      - action: action_search_chat_history
-
-      # 3. Give up and ask for human
+      # 3. Still not happy -> Handover
       - intent: human_handover
       - action: utter_handover_ack
       - action: action_create_support_request
       - action: action_handover
-
-  # ========================================================
-  # Interactive Flow: Direct intent with entities
-  # ========================================================
-  - story: Direct interaction - FAQ with entity provided upfront
-    steps:
-      - intent: inform_faq_query
-        entities:
-          - search_term: "refund"
-      - action: faq_search_form
-      - active_loop: faq_search_form
-      - action: faq_search_form
-      - active_loop: null
-      - action: action_search_faq

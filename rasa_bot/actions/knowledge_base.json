@@ -1,62 +1,261 @@
 [
   {
     "question": "What is your return policy?",
-    "keywords": ["return", "refund", "exchange", "back", "policy"],
+    "keywords": [
+      "return",
+      "refund",
+      "exchange",
+      "back",
+      "policy"
+    ],
     "answer": "You can return any unwashed shirt within 30 days of delivery. We offer free store credit or a refund to your original payment method (minus a $5 shipping fee)."
   },
   {
     "question": "How do I wash my linen shirt?",
-    "keywords": ["wash", "clean", "laundry", "care", "linen", "dryer"],
+    "keywords": [
+      "wash",
+      "clean",
+      "laundry",
+      "care",
+      "linen",
+      "dryer"
+    ],
     "answer": "Linen loves cool water! Machine wash on a gentle cycle with cold water. Hang to dry—do not tumble dry as it shrinks the fibers."
   },
   {
     "question": "Do you ship internationally?",
-    "keywords": ["ship", "delivery", "country", "overseas", "global", "europe", "asia"],
+    "keywords": [
+      "ship",
+      "delivery",
+      "country",
+      "overseas",
+      "global",
+      "europe",
+      "asia"
+    ],
     "answer": "Yes, we ship to over 50 countries. International shipping takes 7-14 business days depending on customs."
   },
   {
     "question": "How do I find my size?",
-    "keywords": ["size", "fit", "measure", "chart", "large", "small", "medium", "dimensions"],
+    "keywords": [
+      "size",
+      "fit",
+      "measure",
+      "chart",
+      "large",
+      "small",
+      "medium",
+      "dimensions"
+    ],
     "answer": "Check our Size Guide on the website. Generally, our 'Slim Fit' runs true to size, while 'Relaxed Fit' is slightly larger. If you are between sizes, we recommend sizing up!"
   },
   {
     "question": "Can I change or cancel my order?",
-    "keywords": ["cancel", "change", "modify", "edit", "mistake", "wrong"],
+    "keywords": [
+      "cancel",
+      "change",
+      "modify",
+      "edit",
+      "mistake",
+      "wrong"
+    ],
     "answer": "We process orders quickly! You have a 1-hour window after placing an order to make changes or cancel. Please contact support immediately if you need help."
   },
   {
     "question": "Where is my order?",
-    "keywords": ["track", "status", "where", "package", "arrive", "late"],
+    "keywords": [
+      "track",
+      "status",
+      "where",
+      "package",
+      "arrive",
+      "late"
+    ],
     "answer": "You can track your order status by asking me 'Check Order Status' and providing your Order ID. You should also have received a tracking link via email."
   },
   {
     "question": "What payment methods do you accept?",
-    "keywords": ["pay", "card", "visa", "paypal", "amex", "wallet", "credit"],
+    "keywords": [
+      "pay",
+      "card",
+      "visa",
+      "paypal",
+      "amex",
+      "wallet",
+      "credit"
+    ],
     "answer": "We accept all major credit cards (Visa, Mastercard, Amex), PayPal, and Apple Pay. We do not accept cash on delivery."
   },
   {
     "question": "Do you offer student discounts?",
-    "keywords": ["discount", "coupon", "code", "student", "promo", "sale", "offer"],
+    "keywords": [
+      "discount",
+      "coupon",
+      "code",
+      "student",
+      "promo",
+      "sale",
+      "offer"
+    ],
     "answer": "Yes! Students get 15% off. Verify your student status with StudentBeans on our checkout page to get your unique code."
   },
   {
     "question": "Are your shirts 100% cotton?",
-    "keywords": ["material", "fabric", "cotton", "polyester", "blend", "synthetic"],
+    "keywords": [
+      "material",
+      "fabric",
+      "cotton",
+      "polyester",
+      "blend",
+      "synthetic"
+    ],
     "answer": "Our 'Classic Oxford' range is 100% organic cotton. Our 'Performance' line uses a cotton-spandex blend for stretch. Check the specific product description for details."
   },
   {
     "question": "My item arrived damaged.",
-    "keywords": ["damaged", "broken", "rip", "tear", "defect", "faulty", "hole"],
+    "keywords": [
+      "damaged",
+      "broken",
+      "rip",
+      "tear",
+      "defect",
+      "faulty",
+      "hole"
+    ],
     "answer": "We are so sorry! Please send a photo of the damage to support@shirtstudio.com within 48 hours of delivery, and we will send a replacement immediately."
   },
   {
     "question": "Do you have physical stores?",
-    "keywords": ["store", "location", "shop", "visit", "try on", "address"],
+    "keywords": [
+      "store",
+      "location",
+      "shop",
+      "visit",
+      "try on",
+      "address"
+    ],
     "answer": "We are currently an online-only boutique. This helps us keep our prices low by avoiding expensive rent!"
   },
   {
     "question": "How do I use a gift card?",
-    "keywords": ["gift", "voucher", "redeem", "present", "balance"],
+    "keywords": [
+      "gift",
+      "voucher",
+      "redeem",
+      "present",
+      "balance"
+    ],
     "answer": "You can enter your gift card code at the checkout page in the 'Promo Code / Gift Card' box. The balance will be deducted from your total."
+  },
+  {
+    "question": "What happens if I'm not home for delivery?",
+    "keywords": [
+      "delivery",
+      "missed",
+      "not home",
+      "courier",
+      "signature",
+      "attempt"
+    ],
+    "answer": "If you miss your delivery, the courier will usually leave a card with instructions to reschedule or pick up your package from a local depot. Most couriers will attempt delivery 3 times."
+  },
+  {
+    "question": "Do you sell gift cards?",
+    "keywords": [
+      "gift card",
+      "present",
+      "voucher",
+      "buy gift",
+      "gift certificate"
+    ],
+    "answer": "Yes! You can purchase digital gift cards directly from our website. They are delivered instantly via email and never expire."
+  },
+  {
+    "question": "Can I pre-order out of stock items?",
+    "keywords": [
+      "pre-order",
+      "stock",
+      "sold out",
+      "waitlist",
+      "backorder",
+      "notify"
+    ],
+    "answer": "If an item is out of stock, you can sign up for email notifications on the product page. We occasionally open pre-orders for popular items—check the product description for availability."
+  },
+  {
+    "question": "Is my payment information secure?",
+    "keywords": [
+      "security",
+      "safe",
+      "payment",
+      "encryption",
+      "ssl",
+      "data",
+      "privacy"
+    ],
+    "answer": "Absolutely. We use industry-standard SSL encryption to protect your details. We do not store your credit card information on our servers; all transactions are processed by secure third-party payment gateways."
+  },
+  {
+    "question": "Do you offer wholesale or bulk discounts?",
+    "keywords": [
+      "wholesale",
+      "bulk",
+      "corporate",
+      "large order",
+      "volume discount",
+      "business"
+    ],
+    "answer": "Yes, we offer discounts for corporate or bulk orders of 20+ shirts. Please contact our sales team at sales@shirtstudio.com for a custom quote."
+  },
+  {
+    "question": "How do I care for my silk shirt?",
+    "keywords": [
+      "silk",
+      "wash",
+      "care",
+      "clean",
+      "dry clean",
+      "iron",
+      "delicate"
+    ],
+    "answer": "Silk is delicate! We recommend dry cleaning for the best results. If you must wash at home, hand wash in cold water with specialized silk detergent and lay flat to dry. Iron on low heat inside out."
+  },
+  {
+    "question": "Why has my order been delayed?",
+    "keywords": [
+      "delay",
+      "late",
+      "waiting",
+      "hold",
+      "shipping time",
+      "stuck"
+    ],
+    "answer": "Delays can happen due to high order volume, holidays, or carrier issues. If your order is more than 3 days late past the estimated delivery date, please contact support and we will investigate."
+  },
+  {
+    "question": "Do you collaborate with influencers?",
+    "keywords": [
+      "influencer",
+      "collab",
+      "partnership",
+      "brand ambassador",
+      "social media",
+      "promote"
+    ],
+    "answer": "We love working with creators! If you align with our style, please send your media kit and social links to collab@shirtstudio.com for consideration."
+  },
+  {
+    "question": "What is the difference between your fabrics?",
+    "keywords": [
+      "material",
+      "fabric",
+      "cotton",
+      "linen",
+      "silk",
+      "difference",
+      "type",
+      "quality"
+    ],
+    "answer": "Our Cotton is crisp and professional. Linen is breathable and textured (great for summer). Silk is luxurious and smooth for formal events."
   }
 ]

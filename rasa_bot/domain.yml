@@ -6,21 +6,16 @@ intents:
   - goodbye
   - bot_challenge
   - abusive
-  - start_new_chat
   - product_info
   - returns
   - check_order_status
   - inform_order_id
   - update_order_details
   - search_faq
-  - search_chat_history
   - inform_faq_query
-  - inform_history_query
   - human_handover
   - submit_support_request
   - rephrase
-  - delete_chat_messages
-  - edit_last_message
   - nlu_fallback
   - ask_sales_advice
   - ask_payment_methods
@@ -40,6 +35,12 @@ slots:
         conditions:
           - active_loop: order_status_form
             requested_slot: order_id
+        not_intent:
+          - search_faq
+          - ask_sales_advice
+          - abusive
+          - greet
+          - goodbye
 
   # --- CUSTOMER CONTEXT SLOTS ---
   customer_style:
@@ -62,22 +63,26 @@ slots:
 
   search_term:
     type: text
-    influence_conversation: false
     mappings:
+      # PRIORITY 1: If the user provided it in the first sentence (Scenario B)
       - type: from_entity
         entity: search_term
+
+      # PRIORITY 2: If the form is asking, take whatever text they type (Scenario A)
       - type: from_text
         conditions:
           - active_loop: faq_search_form
-            requested_slot: search_term
-      - type: from_text
-        conditions:
-          - active_loop: history_search_form
             requested_slot: search_term
 
   requested_slot:
     type: text
     influence_conversation: false
+    mappings:
+      - type: custom
+
+  current_product_context:
+    type: text
+    influence_conversation: false # Just for memory, doesn't change story flow
     mappings:
       - type: custom
 
@@ -87,10 +92,6 @@ forms:
       - order_id
 
   faq_search_form:
-    required_slots:
-      - search_term
-
-  history_search_form:
     required_slots:
       - search_term
 
@@ -113,36 +114,19 @@ responses:
     - text: "I'm trying my best to help you find what you need. Let's please keep the conversation respectful."
     - text: "We value respect here. Please refrain from using offensive language so I can assist you better."
 
-  utter_restart_ack:
-    - text: "Okay, scrubbing the memory. Let's start fresh!"
-    - text: "Resetting the session... Hi again! How can I help?"
-
   utter_product_info:
     - text: "We specialize in high-quality men's shirts. Our collection includes Formal Oxfords, Casual Linens, and Party Wear. Check the website for the full catalogue!"
     - text: "From the boardroom to the beach, we have a shirt for every occasion. We stock sizes XS to XXL in Slim and Regular fits."
     - text: "We sell shirts made from 100% organic cotton, Italian linen, and premium silk blends."
-
-  utter_returns_policy:
-    - text: "Our fit guarantee allows you to return items within 30 days, provided the tags are still attached and the shirt is unworn."
-    - text: "Didn't fit right? No problem. You can initiate a return for any unwashed item within 30 days of delivery."
-    - text: "Returns are free for store credit, or a small fee for original payment refunds. The window is 30 days."
 
   utter_ask_order_id:
     - text: "I can definitely check that. Could you please provide your Order ID? (It usually looks like ORD-12345)"
     - text: "To track your shipment, I need your Order Number. Please type it below (e.g., ORD-99881)."
     - text: "What is the Order ID you are inquiring about?"
 
-  utter_ask_search_term:
-    - text: "I can search our knowledge base. What topic (e.g., 'washing instructions', 'fabric') are you looking for?"
-    - text: "What keyword should I search for in our FAQ?"
-
   utter_ask_faq_search_form_search_term:
     - text: "Sure—what topic regarding our shirts or policies would you like to search?"
     - text: "I'm listening. What specific question or keyword do you have for the FAQ?"
-
-  utter_ask_history_search_form_search_term:
-    - text: "I can search our past conversation. What keyword did we talk about?"
-    - text: "Remind me—what specific word should I look for in our chat history?"
 
   utter_handover_ack:
     - text: "I see you have a complex issue. Let me connect you to a human style expert."
@@ -160,12 +144,6 @@ responses:
     - text: "I'm sorry, I didn't quite catch that. Could you rephrase your question?"
     - text: "My AI brain is a bit confused. Could you say that in a different way?"
 
-  utter_delete_chat_messages_help:
-    - text: "To clear your chat history, please use the 'Clear Chat' button located in the menu bar at the top right."
-
-  utter_edit_last_message_help:
-    - text: "Made a typo? You can edit your last message by hovering over it and clicking the small pencil icon."
-
   utter_fallback:
     - text: "I'm sorry, I didn't understand that. You can ask me to 'Check Order Status', 'Search FAQs', or ask for 'Sales Advice' on our shirts."
     - text: "I missed that. Try asking: 'Where is my order?' or 'Recommend a shirt for a wedding'."
@@ -174,18 +152,15 @@ responses:
     - text: "I'm slightly confused. You can ask about shirt fabrics, returns, or track your package."
 
 actions:
+  # --- Active Business Logic ---
   - action_check_order_status
+  - validate_order_status_form
   - action_create_support_request
   - action_handover
   - action_search_faq
-  - action_search_chat_history
-  - action_restart
-  - validate_order_status_form
-  - action_default_fallback
-  - action_update_order_id
-  - action_handover_to_human
-  - action_smart_fallback
   - action_sales_brain
+
+  # --- Active Fallback Logic ---
   - action_llm_fallback
 
 session_config:
