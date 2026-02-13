@@ -466,7 +466,7 @@ def get_llm_response(system_prompt, user_message):
     Direct API call to Google Gemini (Stable Flash Version)
     """
     try:
-        api_key = "AIzaSyCboquucGMpuCpMlRgIV41k3LCtXgXxMDw"
+        api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             return "DEBUG ERROR: API Key is missing."
 
