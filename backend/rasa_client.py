@@ -64,7 +64,7 @@ def get_rasa_response(
 
     try:
         # 3. Call Rasa Webhook for the actual bot response
-        r = requests.post(RASA_WEBHOOK_URL, json=payload, timeout=50)
+        r = requests.post(RASA_WEBHOOK_URL, json=payload, timeout=60)
         r.raise_for_status()
         rasa_output = r.json()
 
@@ -105,17 +105,20 @@ def get_rasa_response(
     except Exception as e:
         print(f"🔥 CRITICAL RASA ERROR: {e}")
         traceback.print_exc()
+        db.rollback()
+        safe_email = str(actor_email) if actor_email else "unknown"
         # Log the failure even if Rasa is down
         save_chat_log(
             db,
             actor_id="System",
-            actor_email=actor_email,
+            actor_email=safe_email,
             msg=message,
             res="ERROR",
             intent="system_error",
             conf=0.0,
             duration=0.0,
             escalated=True,
+            conversation_id=conversation_id,
         )
         return []
 
