@@ -20,30 +20,42 @@ def get_pending_chats(
 ):
     """
     Fetch chats for the Agent Dashboard.
-    Returns:
-    1. Chats waiting for ANY agent (Unassigned)
-    2. Chats specifically assigned to THIS agent (Waiting or Active)
+    Fixed: Joins with User table to return 'email' string instead of 'user_id' integer.
     """
-    chats = (
-        db.query(Conversation)
+
+    # 1. Query Conversation + User Email
+    results = (
+        db.query(Conversation, User.email)
+        .join(User, Conversation.user_id == User.id)  # Join to get the email
         .filter(
-            # 1. Filter by Status: Only show Waiting or Active chats (ignore closed/bot)
+            # Filter by Status: Only show Waiting or Active chats
             Conversation.status.in_(["waiting_for_agent", "active_agent"]),
-            # 2. Filter by Ownership:
-            #    Show if it is assigned to ME -OR- if it is completely Unassigned
+            # Filter by Ownership: Unassigned OR Assigned to Me
             or_(
                 Conversation.assigned_agent_id == current_agent.id,
                 Conversation.assigned_agent_id == None,
             ),
         )
-        .order_by(
-            # Sort by most recently updated first
-            Conversation.updated_at.desc()
-        )
+        .order_by(Conversation.updated_at.desc())
         .all()
     )
 
-    return chats
+    # 2. Reconstruct the response manually to fix the Type Error
+    response_list = []
+    for conv, user_email in results:
+        response_list.append(
+            {
+                "id": conv.id,
+                "user_id": user_email,  # ✅ SWAP: Using Email (str) instead of ID (int)
+                "title": conv.title,
+                "status": conv.status,
+                "created_at": conv.created_at,
+                "updated_at": conv.updated_at,
+                "assigned_agent_id": conv.assigned_agent_id,
+            }
+        )
+
+    return response_list
 
 
 # 2. AGENT JOINS A CHAT
