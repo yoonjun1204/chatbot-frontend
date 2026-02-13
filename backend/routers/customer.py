@@ -20,62 +20,74 @@ SGT = timezone(timedelta(hours=8))
 def chat_endpoint(req: ChatRequest, db: Session = Depends(get_db)):
     start_time = time.time()
 
-    # 1. Determine Identity
-    # Use the email passed from the frontend
+    # ============================================================
+    # 1. IDENTITY & USER MANAGEMENT
+    # ============================================================
     current_email = req.user_id if req.user_id else "anonymous"
 
-    # 🆕 NEW: Look up the real Database User ID (e.g., Alice = 3)
+    # Find the user in the database
     db_user = db.query(User).filter(User.email == current_email).first()
-    # We will use this for the 'actor_id' in logs
-    actual_user_id_str = str(db_user.id) if db_user else "Guest"
 
-    # 2. Find or create conversation
+    # If user doesn't exist, create them NOW so we have a valid ID
+    if not db_user:
+        db_user = User(email=current_email, role="customer")
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+
+    # Now we are 100% sure we have a user and an ID
+    actual_user_id = db_user.id
+    actual_user_email = db_user.email
+    actual_user_id_str = str(actual_user_id)
+
+    # ============================================================
+    # 2. CONVERSATION MANAGEMENT
+    # ============================================================
+    conv = None
     if req.conversation_id:
         conv = (
             db.query(Conversation)
             .filter(Conversation.id == req.conversation_id)
             .first()
         )
-    else:
-        conv = None
 
     if not conv:
+        # ✅ FIX: Use the Integer ID (db_user.id), NOT the email string
         conv = Conversation(
-            user_id=current_email, title="New Chat", created_at=datetime.now(SGT)
+            user_id=actual_user_id, title="New Chat", created_at=datetime.now(SGT)
         )
         db.add(conv)
         db.commit()
         db.refresh(conv)
     else:
-        # Update email if they logged in mid-session
-        if current_email != "anonymous" and conv.user_id != current_email:
-            conv.user_id = current_email
+        # Update owner if logged in mid-session
+        # ✅ FIX: Compare Integers (conv.user_id vs actual_user_id)
+        if conv.user_id != actual_user_id:
+            conv.user_id = actual_user_id
             db.commit()
 
     # ============================================================
-    # 🟢 FIXED: AGENT ESCALATION HANDLING (Now with Logging)
+    # 3. AGENT ESCALATION HANDLING
     # ============================================================
-
-    # CASE 1 & 2 Combined: Customer is waiting OR talking to agent
     if conv.status in ["waiting_for_agent", "active_agent"]:
-        # 1. Save Message
+        # Save User Message
         user_msg = Message(conversation_id=conv.id, sender="user", text=req.message)
         db.add(user_msg)
         db.commit()
 
-        # 2. Determine Reply Status
+        # Determine Reply
         reply_txt = ""
         intent_label = "human_conversation"
+
         if conv.status == "waiting_for_agent":
             reply_txt = "Please wait, an agent will be with you shortly."
             intent_label = "system_wait"
 
-        # 3. 🆕 ADD THIS: Save to Analytics ChatLog
-        # We need to record what the user said, even if the bot didn't reply
+        # ✅ FIX: Use actual_user_email (String), not conv.user_id (Integer)
         analytics_log = ChatLog(
             conversation_id=conv.id,
-            actor_id=actual_user_id_str,  # Use the ID calculated earlier
-            actor_email=conv.user_id,
+            actor_id=actual_user_id_str,
+            actor_email=actual_user_email,
             user_message=req.message,
             bot_response=reply_txt,
             intent=intent_label,
@@ -95,37 +107,35 @@ def chat_endpoint(req: ChatRequest, db: Session = Depends(get_db)):
         )
 
     # ============================================================
-    # 🟢 STANDARD BOT FLOW STARTS HERE
+    # 4. STANDARD BOT FLOW
     # ============================================================
 
-    # ... (Step 2 & 3: Message storage and NLP remain the same) ...
+    # Save User Message
     user_msg = Message(conversation_id=conv.id, sender="user", text=req.message)
     db.add(user_msg)
-    db.flush()
+    db.flush()  # Flush to get the ID for the logs
 
-    # AUTO-TITLE LOGIC: Update title if this is the first user message
+    # Auto-Title Logic
     msg_count = db.query(Message).filter(Message.conversation_id == conv.id).count()
     if msg_count == 1:
-        # Use first 25 chars of the first message as the title
         new_title = req.message[:25] + ("..." if len(req.message) > 25 else "")
         conv.title = new_title
 
+    # NLP Parsing
     intent, entities, confidence = parse_message(req.message)
 
-    # 4. Handle intent with Hybrid/Rasa Logic
+    # Handle Intent
     reply_text, payload = handle_intent(intent, entities, db=db)
 
     if reply_text is None:
-        # DELEGATE TO RASA
+        # ✅ FIX: Pass the email string explicitly to Rasa handler
         rasa_responses = get_rasa_response(
             req.message,
             sender_id=str(conv.id),
-            actor_email=conv.user_id,  # This is the email (alicetan@...)
+            actor_email=actual_user_email,  # Pass String
             db=db,
             conversation_id=conv.id,
         )
-        # Note: You need to ensure get_rasa_response uses actual_user_id_str
-        # inside its save_chat_log call. See below.
 
         if rasa_responses:
             texts = [m.get("text", "") for m in rasa_responses if m.get("text")]
@@ -135,12 +145,14 @@ def chat_endpoint(req: ChatRequest, db: Session = Depends(get_db)):
         else:
             reply_text = "Sorry, I am having trouble reaching the AI engine."
     else:
-        # LOCAL LOGGING (Hybrid Logic)
+        # Local Logic Logging
         duration_ms = (time.time() - start_time) * 1000
+
+        # ✅ FIX: Use actual_user_email (String)
         save_chat_log(
             db,
-            actor_id=actual_user_id_str,  # 🆕 CHANGED: Now "3" instead of "4"
-            actor_email=conv.user_id,  # "alicetan@example.com"
+            actor_id=actual_user_id_str,
+            actor_email=actual_user_email,
             msg=req.message,
             res=reply_text,
             intent=intent,
@@ -148,17 +160,13 @@ def chat_endpoint(req: ChatRequest, db: Session = Depends(get_db)):
             duration=duration_ms,
             escalated=False,
             conversation_id=conv.id,
+            user_message_id=user_msg.id,
         )
 
-    # 5. Store bot message & return
+    # Save Bot Message
     bot_msg = Message(conversation_id=conv.id, sender="bot", text=reply_text)
     db.add(bot_msg)
     db.commit()
-    db.refresh(user_msg)
-    db.refresh(bot_msg)
-
-    # 6. Quick replies
-    quick_replies = get_quick_replies(intent)
 
     return ChatResponse(
         conversation_id=conv.id,
@@ -167,7 +175,7 @@ def chat_endpoint(req: ChatRequest, db: Session = Depends(get_db)):
         bot_message_id=bot_msg.id,
         intent=intent,
         entities=entities,
-        quick_replies=quick_replies,
+        quick_replies=get_quick_replies(intent),
         payload=payload,
     )
 
@@ -177,7 +185,8 @@ def get_user_chat_history(user_email: str, db: Session = Depends(get_db)):
     """Fetches the list of all chat sessions for the sidebar."""
     return (
         db.query(Conversation)
-        .filter(Conversation.user_id == user_email)
+        .join(User, Conversation.user_id == User.id)  # Link tables
+        .filter(User.email == user_email)  # Filter by Email
         .order_by(Conversation.updated_at.desc())
         .all()
     )
