@@ -138,6 +138,7 @@ def update_user(
     return {"message": "User updated successfully"}
 
 
+# Endpoint to delete a user
 @router.delete("/{user_id}")
 def delete_user(
     user_id: int,

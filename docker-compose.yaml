@@ -36,7 +36,8 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-    # ✅ HEALTHCHECK: Ensures action server is up
+      - PYTHONUNBUFFERED=1 # Ensures logs are printed immediately
+    # HEALTHCHECK: Ensures action server is up
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5055/health"]
       interval: 5s

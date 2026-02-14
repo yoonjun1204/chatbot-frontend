@@ -242,7 +242,7 @@ class ActionSearchFaq(Action):
             return []
 
         query_lower = query.lower()
-        print(f"\nDEBUG: Handling FAQ Search for: '{query_lower}'")
+        print(f"\nDEBUG: Handling FAQ Search for: '{query_lower}'", flush=True)
 
         kb_path = os.path.join(os.path.dirname(__file__), "knowledge_base.json")
         try:
@@ -263,7 +263,8 @@ class ActionSearchFaq(Action):
             # Print logic to see what's winning
             if hits > 0:
                 print(
-                    f"DEBUG: Checking '{entry['question']}' - Found {hits} keyword matches."
+                    f"DEBUG: Checking '{entry['question']}' - Found {hits} keyword matches.",
+                    flush=True,
                 )
 
             # Update winner if this entry has MORE matches than the previous best
@@ -272,7 +273,8 @@ class ActionSearchFaq(Action):
                 best_entry = entry
 
         print(
-            f"DEBUG: Winner is '{best_entry['question'] if best_entry else 'None'}' with {max_hits} hits.\n"
+            f"DEBUG: Winner is '{best_entry['question'] if best_entry else 'None'}' with {max_hits} hits.\n",
+            flush=True,
         )
 
         # --- STEP 2: FUZZY MATCHING (Fallback) ---
@@ -287,7 +289,8 @@ class ActionSearchFaq(Action):
                 if fuzzy_score > 60:
                     best_entry = knowledge_base[match[2]]
                     print(
-                        f"DEBUG: Fallback to Fuzzy Match: {best_entry['question']} (Score: {fuzzy_score})"
+                        f"DEBUG: Fallback to Fuzzy Match: {best_entry['question']} (Score: {fuzzy_score})",
+                        flush=True,
                     )
 
         # --- STEP 3: GENERATE RESPONSE ---
@@ -392,6 +395,7 @@ class ActionSalesBrain(Action):
 
     def run(self, dispatcher, tracker, domain):
         user_msg = tracker.latest_message.get("text")
+        print(f"\nDEBUG: User said: '{user_msg}'", flush=True)  # <--- DEBUG
 
         # --- 1. GET CONTEXT ---
         events = tracker.events_after_latest_restart()
@@ -404,11 +408,54 @@ class ActionSalesBrain(Action):
         chat_history = chat_history[-600:]
 
         # --- 2. SMART INVENTORY SEARCH ---
-        # Fetch products (including Size and Type columns if available)
-        products = db_service.search_products(keyword=user_msg)
 
+        # A. Try Strict Search First
+        products = db_service.search_products(keyword=user_msg)
+        if products:
+            print(f"DEBUG: Strict search found {len(products)} items.", flush=True)
+
+        # B. IF STRICT FAILS, TRY FUZZY CORRECTION
         if not products:
-            # Broaden search: ignore filler words, check 3+ letter words
+            print(
+                "DEBUG: Strict search failed. Attempting Fuzzy Correction...",
+                flush=True,
+            )
+
+            # 1. Gather tokens from DB
+            correction_candidates = []
+            if db_service.engine:
+                try:
+                    with db_service.engine.connect() as conn:
+                        rows = conn.execute(
+                            text("SELECT name, color, type FROM products")
+                        ).fetchall()
+                        for r in rows:
+                            # Add Color and Type
+                            if r[1]:
+                                correction_candidates.append(str(r[1]))  # Color
+                            if r[2]:
+                                correction_candidates.append(str(r[2]))  # Type
+
+                            # Add Name Tokens (Split "Cloud-Soft Hoodie" -> "Cloud", "Soft", "Hoodie")
+                            if r[0]:
+                                clean_name = (
+                                    str(r[0]).replace("-", " ").replace("/", " ")
+                                )
+                                for token in clean_name.split():
+                                    if len(token) >= 3:
+                                        correction_candidates.append(token)
+
+                    # Remove duplicates for speed
+                    correction_candidates = list(set(correction_candidates))
+                    print(
+                        f"DEBUG: Loaded {len(correction_candidates)} tokens from DB (e.g. {correction_candidates[:3]})",
+                        flush=True,
+                    )
+
+                except Exception as e:
+                    print(f"DEBUG ERROR: DB Correction Load Failed: {e}", flush=True)
+
+            # 2. Extract potential keywords from user message
             ignore_words = {
                 "the",
                 "and",
@@ -425,27 +472,47 @@ class ActionSalesBrain(Action):
                 "available",
                 "want",
                 "need",
+                "please",
+                "i",
             }
-            keywords = [
+            user_words = [
                 w
                 for w in user_msg.split()
                 if len(w) >= 3 and w.lower() not in ignore_words
             ]
 
-            for word in keywords:
-                found = db_service.search_products(keyword=word)
+            corrected_keywords = []
+            for word in user_words:
+                # Fuzzy match
+                # Using ratio (Levenshtein) is best for fixing typos
+                match = process.extractOne(
+                    word, correction_candidates, scorer=fuzz.ratio
+                )
+
+                # LOWERED THRESHOLD TO 70 (Better for "demin" -> "Denim")
+                if match and match[1] >= 70:
+                    print(
+                        f"DEBUG: Typo Fixed! '{word}' -> '{match[0]}' (Score: {match[1]})",
+                        flush=True,
+                    )
+                    corrected_keywords.append(match[0])
+                else:
+                    print(f"DEBUG: No match for '{word}' (Best: {match})", flush=True)
+
+            # 3. Search DB again with CORRECTED words
+            for kw in corrected_keywords:
+                found = db_service.search_products(keyword=kw)
                 if found:
                     products.extend(found)
 
-            # Deduplicate by name
             products = list({p["name"]: p for p in products}.values())
 
-        # Fallback: Best Sellers if nothing found
+        # Fallback: Best Sellers
         if not products:
+            print("DEBUG: Fuzzy search failed. Loading Best Sellers.", flush=True)
             products = db_service.search_products(keyword=None)
 
         # --- 3. FORMAT DATA FOR AI ---
-        # We explicitly label every field so the AI understands Size and Type
         if products:
             inv_text = "\n".join(
                 [
@@ -456,7 +523,7 @@ class ActionSalesBrain(Action):
         else:
             inv_text = "No stock found."
 
-        # --- 4. THE HYBRID LOGIC PROMPT ---
+        # --- 4. UNIVERSAL PROMPT ---
         system_prompt = f"""
         You are 'Stitch', a helpful shirt store assistant.
         
@@ -490,8 +557,7 @@ class ActionSalesBrain(Action):
 
         bot_reply = get_llm_response(system_prompt, user_msg)
 
-        # --- 5. SAVE CONTEXT ---
-        # Check if the bot mentioned a specific product, and save it to a slot.
+        # Save Context
         mentioned_product = None
         for p in products:
             if p["name"] in bot_reply:

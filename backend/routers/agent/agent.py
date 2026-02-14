@@ -14,6 +14,7 @@ from sqlalchemy import or_
 router = APIRouter()
 
 
+# 1. AGENT DASHBOARD - VIEW PENDING CHATS
 @router.get("/pending_chats", response_model=List[ConversationResponse])
 def get_pending_chats(
     db: Session = Depends(get_db), current_agent: User = Depends(get_current_user)
@@ -121,6 +122,7 @@ def agent_send_message(
     return {"status": "sent", "message_id": agent_msg.id}
 
 
+# 4. AGENT DASHBOARD - VIEW AGENTS (for Admin)
 @router.post("/end_chat")
 def agent_end_chat(req: EndChatRequest, db: Session = Depends(get_db)):
     """

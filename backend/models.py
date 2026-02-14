@@ -11,6 +11,7 @@ from sqlalchemy import (
     Float,
     Boolean,
     text,
+    Numeric,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import JSON
@@ -122,3 +123,16 @@ class ChatLog(Base):
     response_time_ms = Column(Float)
     is_escalated = Column(Boolean, default=False)  # True if handed to human agent
     user_message_id = Column(Integer, nullable=True)  # Link to the Message.id
+
+
+class Product(Base):
+    __tablename__ = "products"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    price = Column(Numeric(10, 2), nullable=False)
+    color = Column(String(50))
+    description = Column(Text)
+    stock_quantity = Column(Integer, default=0)
+    size = Column(String(50))
+    type = Column(String(50))

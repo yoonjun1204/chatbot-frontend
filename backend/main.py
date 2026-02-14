@@ -33,7 +33,7 @@ app.add_middleware(
     # Ensure this is a LIST of specific strings, not a wildcard "*"
     allow_origins=[
         FRONTEND_ORIGIN,
-        "https://chatbot-frontend-ten-pink.vercel.app",  # Add your specific Vercel URL here
+        "https://chatbot-frontend-ten-pink.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
