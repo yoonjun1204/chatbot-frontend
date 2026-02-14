@@ -1,3 +1,4 @@
+# backend/routers/admin/UserManagement.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from database import get_db
@@ -7,6 +8,7 @@ from typing import Optional
 from models import User
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm.attributes import flag_modified
+from password_hash import get_password_hash
 
 router = APIRouter()
 
@@ -65,24 +67,31 @@ def list_users(
     return result
 
 
-# Endpoint to create a new human agent
+# 🟢 FIXED ENDPOINT: create_agent
 @router.post("/")
 def create_agent(
     req: CreateAgentRequest,
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
+    # 1. Check if email already exists
     if db.query(User).filter(User.email == req.email).first():
         raise HTTPException(status_code=400, detail="Email already exists")
 
+    # 2. Hash the password
+    # We take the raw password from the request and hash it
+    secure_password = get_password_hash(req.password)
+
+    # 3. Create Agent (using 'hashed_password' column)
     agent = User(
         name=req.name,
         email=req.email,
-        password=req.password,
+        hashed_password=secure_password,  # ✅ CORRECT FIELD NAME
         role="agent",
         access=req.access,
         status="active",
     )
+
     db.add(agent)
     db.commit()
     db.refresh(agent)
