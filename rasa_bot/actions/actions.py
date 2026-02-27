@@ -40,20 +40,28 @@ class DatabaseService:
             except Exception as e:
                 print(f"ERROR: Failed to configure database engine: {e}")
 
-    def get_order_status(self, order_id: Text) -> Optional[Dict[Text, Any]]:
+    def get_order_status(
+        self, order_id: Text, user_email: Text
+    ) -> Optional[Dict[Text, Any]]:
         if not self.engine:
-            return None
+            return {"error": "db_error"}
         try:
             with self.engine.connect() as connection:
+                # Security Fix: JOIN users table to verify ownership!
                 query = text(
                     """
-                    SELECT status, estimated_delivery, product_name, quantity, total_price
-                    FROM orders 
-                    WHERE order_number = :order_id
+                    SELECT o.status, o.estimated_delivery, o.product_name, o.quantity, o.total_price
+                    FROM orders o
+                    JOIN users u ON o.user_id = u.id
+                    WHERE o.order_number = :order_id AND u.email = :user_email
                     """
                 )
                 result = (
-                    connection.execute(query, {"order_id": order_id}).mappings().first()
+                    connection.execute(
+                        query, {"order_id": order_id, "user_email": user_email}
+                    )
+                    .mappings()
+                    .first()
                 )
                 if result:
                     return {
@@ -67,10 +75,11 @@ class DatabaseService:
                         "quantity": result["quantity"],
                         "price": result["total_price"],
                     }
+                # Returns None if order doesn't exist OR belongs to another email
                 return None
         except Exception as e:
             print(f"ERROR: DB Query failed: {e}")
-            return None
+            return {"error": "db_error"}
 
     def create_support_ticket(self, issue_description: Text) -> Text:
         return "TICKET-NEW"
@@ -198,13 +207,24 @@ class ActionCheckOrderStatus(Action):
         self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: DomainDict
     ) -> List[Dict[Text, Any]]:
         order_id = tracker.get_slot("order_id")
+
+        # EXTRACT USER EMAIL: Assuming your middle-tier passes it via metadata
+        metadata = tracker.latest_message.get("metadata", {})
+        # Look for user_id or email depending on how your backend sends it
+        user_email = metadata.get("user_id") or metadata.get("email")
+
+        # Fallback for local shell testing where metadata isn't easily passed
+        if not user_email or user_email == "anonymous":
+            user_email = "boblim@example.com"  # Default test user for shell
+
         if not order_id:
             dispatcher.utter_message(text="No order ID provided.")
             return []
 
-        order = db_service.get_order_status(order_id)
+        # Pass the email to the DB service
+        order = db_service.get_order_status(order_id, user_email)
 
-        if order:
+        if order and "error" not in order:
             # UPDATED: Now prints Product, Quantity, and Price!
             dispatcher.utter_message(
                 text=(
@@ -214,9 +234,14 @@ class ActionCheckOrderStatus(Action):
                     f"📅 Expected Delivery: {order['delivery_date']}"
                 )
             )
-        else:
+        elif order and "error" in order:
             dispatcher.utter_message(
-                text=f"I searched our database but couldn't find order {order_id}. Please double check the number."
+                text="I'm having trouble connecting to the database right now."
+            )
+        else:
+            # Safe message: Doesn't reveal if the order exists for someone else
+            dispatcher.utter_message(
+                text=f"I searched our database but couldn't find order {order_id} under your account ({user_email}). Please double check the number."
             )
 
         return [SlotSet("order_id", None)]

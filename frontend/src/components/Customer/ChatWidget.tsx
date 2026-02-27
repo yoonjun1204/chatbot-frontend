@@ -171,6 +171,10 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ userIdentifier }) => {
     setLoading(true);
     setQuickReplies([]);
 
+    // TIMEOUT FIX: Create an AbortController to allow 15 seconds instead of default
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
       const res = await fetch(`${API_BASE}/api/customer/chat`, {
         method: "POST",
@@ -180,7 +184,10 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ userIdentifier }) => {
           conversation_id: conversationId,
           user_id: userIdentifier || "anonymous",
         }),
+        signal: controller.signal // Attach the timeout signal
       });
+
+      clearTimeout(timeoutId); // Clear timeout if the request succeeds
 
       if (!res.ok) throw new Error("API error");
 
@@ -201,9 +208,16 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ userIdentifier }) => {
       });
 
       setQuickReplies(data.quick_replies || []);
-    } catch (err) {
+    } catch (err: any) {
+      clearTimeout(timeoutId);
       console.error(err);
-      addMessage("bot", "Sorry, something went wrong while talking to the server.");
+
+      // Specifically handle timeout aborts vs general errors
+      if (err.name === 'AbortError') {
+        addMessage("bot", "Sorry, the server is taking too long to respond. Please try again.");
+      } else {
+        addMessage("bot", "Sorry, something went wrong while talking to the server.");
+      }
     } finally {
       setLoading(false);
     }

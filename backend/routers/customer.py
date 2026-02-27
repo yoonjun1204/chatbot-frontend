@@ -273,7 +273,11 @@ def edit_message(message_id: int, req: ChatRequest, db: Session = Depends(get_db
 
     if reply_text is None:
         rasa_responses = get_rasa_response(
-            req.message, sender_id=str(conv.id), actor_email=req.user_id, db=db
+            req.message,
+            sender_id=str(conv.id),
+            actor_email=req.user_id,
+            db=db,
+            conversation_id=conv.id,
         )
         reply_text = (
             "\n".join([m.get("text", "") for m in rasa_responses])

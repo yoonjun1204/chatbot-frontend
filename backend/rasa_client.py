@@ -60,7 +60,11 @@ def get_rasa_response(
     # 2. Get NLU data (Intent & Confidence/Accuracy)
     intent_name, _, confidence = parse_message(message)
 
-    payload = {"sender": str(sender_id), "message": message}
+    payload = {
+        "sender": str(sender_id),
+        "message": message,
+        "metadata": {"email": actor_email},  # Passed straight from customer.py
+    }
 
     try:
         # 3. Call Rasa Webhook for the actual bot response
