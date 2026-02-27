@@ -171,9 +171,9 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ userIdentifier }) => {
     setLoading(true);
     setQuickReplies([]);
 
-    // TIMEOUT FIX: Create an AbortController to allow 15 seconds instead of default
+    // TIMEOUT FIX: Create an AbortController to allow 60 seconds instead of default
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     try {
       const res = await fetch(`${API_BASE}/api/customer/chat`, {
