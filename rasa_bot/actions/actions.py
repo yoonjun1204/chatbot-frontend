@@ -206,26 +206,28 @@ class ActionCheckOrderStatus(Action):
     def run(
         self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: DomainDict
     ) -> List[Dict[Text, Any]]:
-        order_id = tracker.get_slot("order_id")
 
-        # EXTRACT USER EMAIL: Assuming your middle-tier passes it via metadata
+        raw_order_id = tracker.get_slot("order_id")
+
+        # 🛑 BULLETPROOF FIX: Normalize the ID right here just in case the form is bypassed
+        order_id = _normalize_order_id(raw_order_id) or raw_order_id
+
+        # EXTRACT USER EMAIL
         metadata = tracker.latest_message.get("metadata", {})
-        # Look for user_id or email depending on how your backend sends it
         user_email = metadata.get("user_id") or metadata.get("email")
 
-        # Fallback for local shell testing where metadata isn't easily passed
+        # Fallback for local shell testing
         if not user_email or user_email == "anonymous":
-            user_email = "boblim@example.com"  # Default test user for shell
+            user_email = "boblim@example.com"
 
         if not order_id:
             dispatcher.utter_message(text="No order ID provided.")
             return []
 
-        # Pass the email to the DB service
+        # Pass the normalized ID and email to the DB service
         order = db_service.get_order_status(order_id, user_email)
 
         if order and "error" not in order:
-            # UPDATED: Now prints Product, Quantity, and Price!
             dispatcher.utter_message(
                 text=(
                     f"Order {order_id} is currently **{order['status']}**.\n"
@@ -239,12 +241,12 @@ class ActionCheckOrderStatus(Action):
                 text="I'm having trouble connecting to the database right now."
             )
         else:
-            # Safe message: Doesn't reveal if the order exists for someone else
             dispatcher.utter_message(
                 text=f"I searched our database but couldn't find order {order_id} under your account ({user_email}). Please double check the number."
             )
 
-        return [SlotSet("order_id", None)]
+        # Do not clear the slot. Return empty list!
+        return []
 
 
 class ActionSearchFaq(Action):
@@ -381,10 +383,23 @@ class ActionSmartFallback(Action):
     def name(self) -> Text:
         return "action_smart_fallback"
 
-    def run(self, dispatcher, tracker, domain):
-        if tracker.get_slot("order_id"):
-            return [FollowupAction("action_check_order_status")]
+    def run(
+        self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: DomainDict
+    ) -> List[Dict[Text, Any]]:
+
+        order_id = tracker.get_slot("order_id")
+
+        if order_id:
+            # 🛑 THE FIX: Do not use FollowupAction here!
+            # Directly execute the checking action right now to keep the HTTP connection open.
+            check_action = ActionCheckOrderStatus()
+            return check_action.run(dispatcher, tracker, domain)
+
+        # Logic: No ID found, so this is a genuine failure.
         dispatcher.utter_message(response="utter_default_feedback")
+        dispatcher.utter_message(response="utter_show_quick_replies")
+
+        # UserUtteranceReverted tells Rasa: "Pretend the user didn't say that last gibberish."
         return [UserUtteranceReverted()]
 
 

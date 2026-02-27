@@ -34,6 +34,12 @@ rules:
       - action: order_status_form
       - active_loop: order_status_form
 
+  - rule: Activate order status form (Direct ID provided)
+    steps:
+      - intent: inform_order_id
+      - action: order_status_form
+      - active_loop: order_status_form
+
   - rule: Submit order status form
     condition:
       - active_loop: order_status_form
